@@ -1,7 +1,7 @@
 #pragma once
 #include <rack.hpp>
-#include "../../extism/runtime/extism.h"
 #include <stdio.h>
+#include "wasm_synth.hpp"
 
 using namespace rack;
 

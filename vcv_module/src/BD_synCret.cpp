@@ -4,14 +4,14 @@
 #include "osdialog.h"
 #include <patch.hpp>
 
-#pragma pack(1)
-struct ProcArgs
-{
-	float sample_time;
-    float freq_hz;
-	float lfo_one;
-	float lfo_two;
-};
+// #pragma pack(1)
+// struct ProcArgs
+// {
+// 	float sample_time;
+//     float freq_hz;
+// 	float lfo_one;
+// 	float lfo_two;
+// };
 
 struct BD_synCret : Module {
 
@@ -95,25 +95,33 @@ struct BD_synCret : Module {
 			
 			const float freq_hz = 261.6256 * std::pow(2.0, inputs[PITCH_INPUT].getVoltage());
 
-			ProcArgs proc_args = ProcArgs{
+			// ProcArgs proc_args = ProcArgs{
+			// 	args.sampleTime,
+			// 	freq_hz,
+			// 	inputs[I1_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f,
+			// 	inputs[I2_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f,
+			// };
+
+			// int rc = extism_plugin_call(plugin, "batch_compute_wf", (const uint8_t*)&proc_args, sizeof(ProcArgs));
+			// if (rc != EXTISM_SUCCESS) {
+			// 	if (plugin == NULL){
+			// 		DEBUG("Manifest: %s", manifest);
+			// 		DEBUG("ERROR: %s\n", errmsg);
+			// 		extism_plugin_new_error_free(errmsg);
+			// 		exit(1);
+			// 	}
+			// 	DEBUG("EXTISM PLUGIN CALL FAILURE: %s", extism_plugin_error(plugin));
+			// }
+			// output_buf = (float*)extism_plugin_output_data(plugin);
+			
+			output_buf = ComputeAudioSamples(
+				plugin, 
 				args.sampleTime,
 				freq_hz,
+				256,
 				inputs[I1_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f,
-				inputs[I2_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f,
-			};
-
-			int rc = extism_plugin_call(plugin, "batch_compute_wf", (const uint8_t*)&proc_args, sizeof(ProcArgs));
-			if (rc != EXTISM_SUCCESS) {
-				if (plugin == NULL){
-					DEBUG("Manifest: %s", manifest);
-					DEBUG("ERROR: %s\n", errmsg);
-					extism_plugin_new_error_free(errmsg);
-					exit(1);
-				}
-				DEBUG("EXTISM PLUGIN CALL FAILURE: %s", extism_plugin_error(plugin));
-			}
-
-			output_buf = (float*)extism_plugin_output_data(plugin);
+				inputs[I2_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f
+				);
 
 			if (output_buf == nullptr) {
             	DEBUG("ERROR: Output buffer is NULL");
