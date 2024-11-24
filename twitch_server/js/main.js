@@ -1,59 +1,17 @@
-// change this implementation to include guest commands
-async function getCommands() {
-  return await xtpClient.listAvailablePlugins(
-    EXT_NAME,
-    GUEST_KEY, // TODO: I think I will need some sort of "admin" way of listing the available plugins.
-  )
-}
-
-async function get_wasm_file(content_address) {
-  const url = 'https://xtp.dylibso.com/api/v1/' + content_address;
-  const xtp_token = process.env.XTP_TOKEN.trim();
-  const options = {method: 'GET', headers: {Authorization: 'Bearer '+xtp_token}};
-  
-  try {
-    const response = await fetch(url, options);
-    const data = await response.json();
-    console.log("SUCCESS");
-  } catch (error) {
-    console.error(error);
-  }  
-}
-
-async function get_wasm_by_plugin_name(plugin_name) {
-  // Fetch all artifacts at this extension point TODO: Will this list the artifacts associated with multiple guest keys?
-  const extension_id = "ext_01j9hn0bshfh2shvdxk9xz7zys";
-  const xtp_token = process.env.XTP_TOKEN.trim();
-  const url = 'https://xtp.dylibso.com/api/v1/extension-points/'+extension_id+'/bindings/';
-  const options = {method: 'GET', headers: {Authorization: 'Bearer '+xtp_token}};
-  
-  try {
-    const response = await fetch(url, options);
-    const data = await response.json();
-    console.log(data)
-    for (const [name, metadata] of Object.entries(data)){
-      console.log(name)
-      if(plugin_name == name){
-        console.log("FOUND: ", plugin_name, " - Downloading its .wasm module file...")
-        get_wasm_file(metadata.contentAddress)
-      }
-    }
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// --------------------------------
-
 require('dotenv').config();
 const { ApiClient } = require('@twurple/api');
 const { ChatClient } = require('@twurple/chat');
 const { StaticAuthProvider } = require('@twurple/auth');
 const express = require('express');
 
+import WasmModuleQueue from './moduleQueue.js';
+import get_wasm_by_plugin_name from './xtpHandler.js';
+
 // Set up express server
 const app = express();
 const PORT = 5309;
+const XTP_TOKEN = process.env.XTP_TOKEN.trim();
+const XTP_EXTENSION_ID = process.env.XTP_EXTENSION_ID.trim();
 
 // Channel for Twitch updates
 const chatUpdates = [];
@@ -72,35 +30,26 @@ async function twitchWorker() {
   // Handle incoming chat messages
   chatClient.onMessage(async (channel, user, message, msg) => {
     console.log(`${user}: ", ${message}`)
-    
-    if (message.startsWith('!')) {
-      const parts = message.slice(1).split(' ');
 
-      if (parts.length < 2) {
-        await chatClient.say(channel, `${user} - Send a message that follows the format ![0-15] [0.0-10.0]`);
-        return;
-      }
+    // TODO: replace the level-setting with requests to enqueue wasm modules fetched from xtp
+    // if (message.startsWith('!')) {
+    //   const parts = message.slice(1).split(' ');
 
-      const channelNum = parseInt(parts[0], 10);
-      const value = parseFloat(parts[1]);
+    //   if (parts.length < 2) {
+    //     await chatClient.say(channel, `${user} - Send a message that follows the format ![0-15] [0.0-10.0]`);
+    //     return;
+    //   }
 
-      if (isNaN(channelNum) || channelNum < 0 || channelNum > 15) {
-        await chatClient.say(channel, `${user} - Please enter a channel 0-15`);
-        return;
-      }
+    //   const channelNum = parseInt(parts[0], 10);
+    //   const value = parseFloat(parts[1]);
 
-      if (isNaN(value) || value < 0.0 || value > 10.0) {
-        await chatClient.say(channel, `${user} - Please enter a value between 0.0 and 10.0`);
-        return;
-      }
+    //   if (isNaN(channelNum) || channelNum < 0 || channelNum > 15) {
+    //     await chatClient.say(channel, `${user} - Please enter a channel 0-15`);
+    //     return;
+    //   }
+    // }
+    // TODO: ------------------------------------------------------------------------
 
-      if (chatUpdates.length === 16) {
-        await chatClient.say(channel, `${user} - The command buffer is full, please wait for it to empty`);
-      } else {
-        await chatClient.say(channel, `${user} - Your command will be applied shortly`);
-        chatUpdates.push(`${parts[0]} ${parts[1]}`);
-      }
-    }
   });
 
   // Handle user joining a channel
@@ -109,12 +58,11 @@ async function twitchWorker() {
   });
 
   // Connect to Twitch chat
-  await chatClient.connect();
+  chatClient.connect();
   console.log(`Joined ${twitchUser}...`);
 }
 
-// ----- TODO: Reinstate when ready to integrate with twitch -----
-
+// TODO: Reinstate when ready to integrate with twitch
 // // JSON server worker function
 // app.get('/twitch-queue', (req, res) => {
 //   const data = {};
@@ -128,16 +76,24 @@ async function twitchWorker() {
 
 //   res.json(data);
 // });
+// TODO: ----------------------------------------------
 
+// TODO: Using this for testing the communication with the VCV Module, remove
+ZIG_WASM_MODULE_BYTES = get_wasm_by_plugin_name("zig_template", XTP_EXTENSION_ID, XTP_TOKEN)
+// TODO: --------------------------------------------------------------------
 
-// app.listen(PORT, () => {
-//   console.log(`Server is running at 0.0.0.0:${PORT}`);
-// });
+// This endpoint will be periodically called by the VCV Rack Module and expects a new module
+// or some signal that nothing has changed in return 
+app.get('/pop-module', (req, res) => {
+  // implement a function for an express js function that returns the uint8 byte array
+  // representing our wasm module. TO the requester it should look no different than a
+  // normal GET file request
+});
+
+// Start the VCV handler
+app.listen(PORT, () => {
+  console.log(`Server is running at 0.0.0.0:${PORT}`);
+});
 
 // Start the workers
 //twitchWorker();
-
-// ---------------------------------------------------------------
-
-
-get_wasm_by_plugin_name("zig_template")
