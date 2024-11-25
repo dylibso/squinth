@@ -18,7 +18,7 @@ async function get_wasm_file(content_address, xtp_token) {
     }
 }
 
-export async function get_wasm_by_plugin_name(plugin_name, extension_id, xtp_token) {
+async function get_wasm_by_plugin_name(plugin_name, extension_id, xtp_token) {
     // Fetch all artifacts at this extension point
     // TODO: Will this list the artifacts associated with multiple guest keys?
 
@@ -40,3 +40,7 @@ export async function get_wasm_by_plugin_name(plugin_name, extension_id, xtp_tok
         console.error(error);
     }
 }
+
+module.exports = {
+    get_wasm_by_plugin_name
+};

@@ -1,4 +1,4 @@
-export class WasmModuleQueue {
+class WasmModuleQueue {
     constructor(maxSize = 100, maxMemoryMB = 500) {
         this.queue = [];
         this.maxSize = maxSize;
@@ -62,3 +62,7 @@ export class WasmModuleQueue {
         };
     }
 }
+
+module.exports = {
+    WasmModuleQueue // Export object with function
+};

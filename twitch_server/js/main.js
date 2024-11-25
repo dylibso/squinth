@@ -4,8 +4,10 @@ const { ChatClient } = require('@twurple/chat');
 const { StaticAuthProvider } = require('@twurple/auth');
 const express = require('express');
 
-import WasmModuleQueue from './moduleQueue.js';
-import get_wasm_by_plugin_name from './xtpHandler.js';
+const {WasmModuleQueue} = require('./moduleQueue.js');
+const {get_wasm_by_plugin_name} = require('./xtpHandler.js');
+
+get_wasm_by_plugin_name
 
 // Set up express server
 const app = express();
@@ -88,6 +90,10 @@ app.get('/pop-module', (req, res) => {
   // implement a function for an express js function that returns the uint8 byte array
   // representing our wasm module. TO the requester it should look no different than a
   // normal GET file request
+  console.log("triggered pop-module")
+  return {
+    buffer:ZIG_WASM_MODULE_BYTES
+  }
 });
 
 // Start the VCV handler
