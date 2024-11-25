@@ -23,7 +23,7 @@ func getWasmFile(contentAddress string, xtpToken string) ([]byte, error) {
 		return nil, fmt.Errorf("error making request: %v", err)
 	}
 	if resp.StatusCode != 200 {
-		fmt.Printf("Response code: %v encountered while trying to fetch from, %v", resp.StatusCode, url)
+		fmt.Printf("\nResponse code: %v encountered while trying to fetch from, %v\n", resp.StatusCode, url)
 		return nil, fmt.Errorf("code %d returned from request for %s", resp.StatusCode, contentAddress)
 	}
 
@@ -70,7 +70,7 @@ func getWasmByPluginName(pluginName string, extensionID string, xtpToken string)
 	for name, metadata := range data {
 		fmt.Println(name)
 		if pluginName == name {
-			fmt.Printf("FOUND: %s - Downloading its .wasm module file...\n", pluginName)
+			fmt.Printf("\nFOUND: %s - Downloading its .wasm module file...\n", pluginName)
 			wasmBytes, err := getWasmFile(metadata.ContentAddress, xtpToken)
 			if err != nil {
 				return nil, fmt.Errorf("error getting wasm file: %v", err)

@@ -1,18 +1,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gempir/go-twitch-irc/v4"
 	"github.com/joho/godotenv"
 )
 
+// TODO: update for the kind of commands that twitch users will send
 func twitchWorker(chatUpdates chan string) {
 	// or client := twitch.NewAnonymousClient() for an anonymous user (no write capabilities)
 	user := strings.TrimSpace(os.Getenv("TWITCH_USER"))
@@ -74,75 +75,85 @@ func twitchWorker(chatUpdates chan string) {
 	}
 }
 
-// func fakeTwitchWorker(chatUpdates chan string) {
-// 	for {
-// 		time.Sleep(time.Millisecond * 200)
-// 		var chatmsg string = "/15 2.5"
-// 		fmt.Println("fake twitch worker: ", chatmsg)
-// 		if chatmsg[0] == '/' {
-// 			parts := strings.Split((chatmsg[1:]), " ")
-// 			channel, err := strconv.Atoi(parts[0])
-// 			if err != nil {
-// 				continue
-// 			}
-// 			if channel < 0 || channel > 15 {
-// 				// TODO: send error msg back thru twitch chat
-// 				continue
-// 			}
-// 			value, err := strconv.ParseFloat(parts[1], 32)
-// 			if err != nil {
-// 				continue
-// 			}
-// 			if value < -10.0 || value > 10.0 {
-// 				// TODO: send error msg back thru twitch chat
-// 				continue
-// 			}
-// 			chatUpdates <- parts[0] + " " + parts[1]
-// 		}
-// 	}
-// }
+// --------------------------------------------------------------------------------------
 
-func jsonServerWorker(chatUpdates chan string) {
-	http.HandleFunc("/twitch-queue", func(respWriter http.ResponseWriter, req *http.Request) {
-		data := make(map[string]string)
+func fakeTwitchWorker(moduleQueue chan []byte, pluginName string) {
+	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
+	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
 
-		// loop until all messages have been flushed, then respond with the json data
-		for {
-			select {
-			case msg := <-chatUpdates:
-				fmt.Println("Flushed message: ", msg)
-				cmdParts := strings.Split(msg, " ")
-				data[cmdParts[0]] = cmdParts[1]
-			default:
-				// No more messages in the channel
-				// Convert the data structure to JSON
-				jsonData, err := json.Marshal(data)
-				if err != nil {
-					http.Error(respWriter, err.Error(), http.StatusInternalServerError)
-					return
-				}
+	// Every 5 seconds fetch the same plugin and add it to the queue to simulate twitch user activity
+	for {
+		time.Sleep(time.Second * 5)
+		fmt.Printf("\nfake twitch worker fetching: %s\n", pluginName)
 
-				// Set the content type to application/json
-				respWriter.Header().Set("Content-Type", "application/json")
+		mod, err := getWasmByPluginName(
+			pluginName,
+			xtp_extension,
+			xtp_token,
+		)
 
-				// Write the JSON data to the response
-				respWriter.Write(jsonData)
-				return
+		if mod == nil || err != nil {
+			fmt.Println("Failed to fetch plugin")
+			if err != nil {
+				fmt.Printf("\nError: %s\n", err)
 			}
+			continue
+		} else if len(moduleQueue) >= 16 {
+			fmt.Println("Queue is at capacity, blocking until slot opens...")
 		}
 
-	})
+		moduleQueue <- mod
 
-	fmt.Println("Server is running at 0.0.0.0:5309")
-	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
+		fmt.Printf("\nSuccessfully Queued: %s\n", pluginName)
+	}
 }
 
+// func jsonServerWorker(chatUpdates chan string) {
+// 	http.HandleFunc("/twitch-queue", func(respWriter http.ResponseWriter, req *http.Request) {
+// 		data := make(map[string]string)
+
+// 		// loop until all messages have been flushed, then respond with the json data
+// 		for {
+// 			select {
+// 			case msg := <-chatUpdates:
+// 				fmt.Println("Flushed message: ", msg)
+// 				cmdParts := strings.Split(msg, " ")
+// 				data[cmdParts[0]] = cmdParts[1]
+// 			default:
+// 				// No more messages in the channel
+// 				// Convert the data structure to JSON
+// 				jsonData, err := json.Marshal(data)
+// 				if err != nil {
+// 					http.Error(respWriter, err.Error(), http.StatusInternalServerError)
+// 					return
+// 				}
+
+// 				// Set the content type to application/json
+// 				respWriter.Header().Set("Content-Type", "application/json")
+
+// 				// Write the JSON data to the response
+// 				respWriter.Write(jsonData)
+// 				return
+// 			}
+// 		}
+
+// 	})
+
+// 	fmt.Println("Server is running at 0.0.0.0:5309")
+// 	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
+// }
+
 func wasmModServerWorker(modQueue chan []byte) {
+	// TODO: Endpoint that will return the NAME of most recently transferred module
+	//   not yet sure how to keep track of that yet in way that doesn't require me to keep 2 lists
+	//   in sync
+	//   This will be used to update the label that is displayed on the vcv module
+
 	http.HandleFunc("/module-queue", func(respWriter http.ResponseWriter, req *http.Request) {
-		fmt.Println("Request Triggered")
+		fmt.Println("Request For Wasm Module Received")
 		select {
 		case module := <-modQueue:
-			fmt.Println("Module Pulled from the Queue, Attempting to send module...")
+			fmt.Println("Module Pulled from the Queue, sending module...")
 			respWriter.Header().Set("Content-Type", "application/wasm")
 			respWriter.Header().Set("Content-Length", fmt.Sprintf("%d", len(module)))
 			respWriter.Write(module)
@@ -163,22 +174,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// chatUpdates := make(chan string, 16)
-	// go twitchWorker(chatUpdates)
-	// // go fakeTwitchWorker(chatUpdates)
-	// go jsonServerWorker(chatUpdates)
 
 	// queue of syth modules
 	moduleQueue := make(chan []byte, 16)
 
-	mod, _ := getWasmByPluginName(
-		"zig_template",
-		strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID")),
-		strings.TrimSpace(os.Getenv("XTP_TOKEN")),
-	)
-
-	moduleQueue <- mod
-
+	go fakeTwitchWorker(moduleQueue, "zig_template")
 	go wasmModServerWorker(moduleQueue)
 
 	select {}
