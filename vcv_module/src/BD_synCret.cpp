@@ -125,15 +125,25 @@ struct BD_synCret : Module {
 
 	void load_wasm(std::string path, bool is_url){
 		DEBUG("Loading wasm from supplied path %s", path.c_str());
-		if (plugin){
-			free(plugin);
-			plugin = nullptr;
+		
+		
+		// Attempt to load a module from a file or URL.
+		// Try/Catch avoids assignment if initialization fails
+		try {
+			ExtismPlugin *tmp_plugin = LoadExtismPlugin(path, is_url);
+			if (plugin) free(plugin); // free old plugin
+			plugin = tmp_plugin;
+			tmp_plugin = nullptr;
 		}
-		plugin = LoadExtismPlugin(path, is_url);
-		DEBUG("Plugin Loaded Successfully");
+		catch(char *error_msg){
+			DEBUG("Failed to initialize extism module with message: %s", error_msg);
+		}
+		
 		std::string label_string = path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
 		this->text_display->text = label_string.c_str();
 		DEBUG("Label String: %s", label_string.c_str());
+		
+		DEBUG("Plugin Loaded Successfully");
 
 		return;
 	}
@@ -180,7 +190,7 @@ struct WasmURLItem : MenuItem
 	void onAction(const event::Action &e) override
 	{
 		// TODO: test path
-		module->load_wasm("http://0.0.0.0:8000/rust_template.wasm", true);
+		module->load_wasm("http://0.0.0.0:5309/module-queue", true);
 	}
 };
 

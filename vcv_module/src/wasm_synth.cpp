@@ -4,6 +4,8 @@ ExtismPlugin* LoadExtismPlugin(std::string path, bool is_url)
 {
     std::string man_str;
     
+    DEBUG("%ld", path.find("http://"));
+
     if(is_url){
         man_str = std::string("{\"wasm\": [{\"url\": \"" + path + "\"}]}");
     }
@@ -14,15 +16,14 @@ ExtismPlugin* LoadExtismPlugin(std::string path, bool is_url)
     const char *manifest = man_str.c_str();
     char *errmsg = nullptr;
 
-    ExtismPlugin *plugin = extism_plugin_new((const uint8_t *)manifest, strlen(manifest), NULL, 0, true, &errmsg);
+    ExtismPlugin *plugin = extism_plugin_new((const uint8_t *)manifest, strlen(manifest), NULL, 0, true, &errmsg); 
     
-    if(errmsg){
+    // Throw error if failed to load a module from the file or URL
+    if(errmsg || !plugin){
         DEBUG("%s", errmsg);
-        return nullptr;
+        throw errmsg;
     }
     
-    if(!plugin) return nullptr;
-
     return plugin;
 }
 
