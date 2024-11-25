@@ -137,16 +137,49 @@ func jsonServerWorker(chatUpdates chan string) {
 	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
 }
 
+func wasmModServerWorker(modQueue chan []byte) {
+	http.HandleFunc("/module-queue", func(respWriter http.ResponseWriter, req *http.Request) {
+		fmt.Println("Request Triggered")
+		select {
+		case module := <-modQueue:
+			fmt.Println("Module Pulled from the Queue, Attempting to send module...")
+			respWriter.Header().Set("Content-Type", "application/wasm")
+			respWriter.Header().Set("Content-Length", fmt.Sprintf("%d", len(module)))
+			respWriter.Write(module)
+		default:
+			fmt.Println("Request Made, but no modules are currently in the queue")
+			http.Error(respWriter, "No modules in queue", http.StatusNotFound)
+			return
+		}
+	})
+
+	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5309")
+	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
+}
+
 func main() {
 	// loads the twitch user and oauth from .env file
 	err := godotenv.Load(".env")
 	if err != nil {
 		panic(err)
 	}
-	chatUpdates := make(chan string, 16)
-	go twitchWorker(chatUpdates)
-	// go fakeTwitchWorker(chatUpdates)
-	go jsonServerWorker(chatUpdates)
+	// chatUpdates := make(chan string, 16)
+	// go twitchWorker(chatUpdates)
+	// // go fakeTwitchWorker(chatUpdates)
+	// go jsonServerWorker(chatUpdates)
+
+	// queue of syth modules
+	moduleQueue := make(chan []byte, 16)
+
+	mod, _ := getWasmByPluginName(
+		"zig_template",
+		strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID")),
+		strings.TrimSpace(os.Getenv("XTP_TOKEN")),
+	)
+
+	moduleQueue <- mod
+
+	go wasmModServerWorker(moduleQueue)
 
 	select {}
 }

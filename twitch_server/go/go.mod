@@ -1,4 +1,4 @@
-module example.com/m/v2
+module twitch-vcv-bot
 
 go 1.22.5
 
