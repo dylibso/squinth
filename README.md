@@ -1,7 +1,8 @@
-# BD-synCret for VCV Rack
+# sQuinth by Extism!
 
-An embedded VCV Rack Wasm host powered by Extism 
+A demonstration of collaborative audio programming via XTP, Extism, VCV Rack, and Twitch 
 
+----- TODO: OLD DOCS -----
 ## What? Why?
 
 This is an experiment to see if a VCV Rack plugin can be written in a language other than C++ via Web Assembly with the help of Extism. The idea occurred to me after a very short googling session seemed to suggest almost all audio programming is done in C++. It probably makes sense to program audio in C++ and there is no reason for anyone to switch, but hell, why not investigate ways to inject different languages into C++ infrastructure.
@@ -32,14 +33,3 @@ Build the plugin:
 - weird thing where when the js template runs for a minute or two it becomes glitched in a random looking way and cpu usage drops to zero, but calls to extism guest funcs is still reporting success codes...
 - Implement examples in a couple more languages?
 - Implement more complex, varied wave types
-
-## Appendix
-
-USEFUL LINKS:
-- https://extism.org/docs/quickstart/plugin-quickstart/
-- https://github.com/extism/rust-pdk#readme
-- https://docs.rs/extism-pdk/latest/extism_pdk/
-- https://community.vcvrack.com/t/getting-loaded-plugin-path/10543
-- https://docs.rs/extism/latest/extism/trait.FromBytesOwned.html
-- https://docs.rs/extism/latest/extism/all.html#traits
-- https://www.metricpanda.com/rival-fortress-update-35-avoiding-automatic-structure-padding-in-c/
