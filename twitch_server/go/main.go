@@ -5,60 +5,54 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
+
+	"strings"
 
 	"github.com/gempir/go-twitch-irc/v4"
 	"github.com/joho/godotenv"
 )
 
 // TODO: update for the kind of commands that twitch users will send
-func twitchWorker(chatUpdates chan string) {
+func twitchWorker(moduleQueue chan []byte) {
 	// or client := twitch.NewAnonymousClient() for an anonymous user (no write capabilities)
 	user := strings.TrimSpace(os.Getenv("TWITCH_USER"))
 	key := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
 	channel := strings.TrimSpace(os.Getenv("CHANNEL"))
+
+	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
+	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
+
 	client := twitch.NewClient(user, key)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println(message.Message)
 		if message.Message[0] == '!' {
-			parts := strings.Split((message.Message[1:]), " ")
-			if len(parts) < 2 {
+			plugin_name := message.Message[1:]
+
+			if strings.Contains(plugin_name, " ") {
 				// TODO: send error msg back thru twitch chat
-				client.Reply(message.Channel, message.ID, "Send a message that follows the format ![0-15] [0.0-10.0]")
+				client.Reply(message.Channel, message.ID, "Send a message that follows the format \"!<plugin_name>\"")
 				return
 			}
 
-			channel, err := strconv.Atoi(parts[0])
+			// check if plugin exists
+			// TODO: I started on a system that would make  a local copy of the registered plugins, but it's not essential
+			// 		would lend itself to more informative error messaging though. And lend itself to showing the users what is available
 
-			if err != nil {
-				client.Reply(message.Channel, message.ID, "There was an issue parsing the channel of "+
-					"your command, please enter an integer 0-15")
-				return
-			} else if channel < 0 || channel > 15 { // TODO: consolidate magic number
-				client.Reply(message.Channel, message.ID, "Please enter a channel 0-15")
-				return
-			}
-
-			value, err := strconv.ParseFloat(parts[1], 32)
-
-			if err != nil {
-				client.Reply(message.Channel, message.ID, "There was an issue parsing the value of "+
-					"your command, please enter a number")
-				return
-			} else if value < 0.0 || value > 10.0 { // TODO: consolidate magic number
-				client.Reply(message.Channel, message.ID, "Please enter a value between 0.0 and 10.0")
+			plugin, err := getWasmByPluginName(plugin_name, xtp_extension, xtp_token)
+			if err != nil { // TODO: consolidate magic number
+				client.Reply(message.Channel, message.ID, fmt.Sprintf("Error while trying to fetch plugin: %s", err))
 				return
 			}
 
 			// TODO: consolidate magic number
-			if len(chatUpdates) == 16 {
-				client.Reply(message.Channel, message.ID, "The command buffer is full, please wait for it to empty")
+			if len(moduleQueue) == 16 {
+				client.Reply(message.Channel, message.ID, "The command buffer is full, blocking until another module is consumed")
 			}
-			client.Reply(message.Channel, message.ID, "Your command will be apllied shortly")
-			chatUpdates <- parts[0] + " " + parts[1]
+			moduleQueue <- plugin
+			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin))
 		}
 	})
 

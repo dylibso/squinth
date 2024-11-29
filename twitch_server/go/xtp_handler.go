@@ -5,7 +5,45 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
+
+type xtpBindingInfo struct {
+	ID             string    `json:"id"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+	ContentAddress string    `json:"contentAddress"`
+}
+
+// func epPlugins(pluginName string, xtpToken string) (bool, error) {
+// 	url := "https://xtp.dylibso.com/api/v1/extension-points/ext_01j9hn0bshfh2shvdxk9xz7zys/bindings/"
+// 	client := &http.Client{}
+
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		return false, fmt.Errorf("error creating request: %v", err)
+// 	}
+
+// 	req.Header.Add("Authorization", "Bearer "+xtpToken)
+
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return false, fmt.Errorf("error making request: %v", err)
+// 	}
+// 	if resp.StatusCode != 200 {
+// 		fmt.Printf("\nResponse code: %v encountered while trying to fetch from, %v\n", resp.StatusCode, url)
+// 		return false, fmt.Errorf("code %d returned in response to ", resp.StatusCode)
+// 	}
+
+// 	defer resp.Body.Close()
+
+// 	var result map[string]any
+// 	var json_bytes []byte
+// 	resp.Body.Read(json_bytes)
+// 	json.Unmarshal(json_bytes, &result)
+// 	for key, value := range result {
+// 		plugins := result["foo"].(map[string]any)
+// 	}
+// }
 
 func getWasmFile(contentAddress string, xtpToken string) ([]byte, error) {
 	url := "https://xtp.dylibso.com/api/v1/c/" + contentAddress
