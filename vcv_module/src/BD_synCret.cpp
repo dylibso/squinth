@@ -1,5 +1,3 @@
-#define CACHESIZE 256
-
 #include "plugin.hpp"
 #include "osdialog.h"
 #include <patch.hpp>
@@ -71,6 +69,8 @@ struct BD_synCret : Module {
 	char *errmsg = nullptr;
 	ExtismPlugin *plugin = nullptr;
 
+	int32_t cachesize = 256;
+
 	const float* output_buf = nullptr;
 	TextDisplay* text_display = nullptr;
 
@@ -86,7 +86,7 @@ struct BD_synCret : Module {
 		}
 
 		// Fill the Output buffer with new audio data
-		if (args.frame % CACHESIZE == 0) {
+		if (args.frame % cachesize == 0) {
 			
 			const float freq_hz = 261.6256 * std::pow(2.0, inputs[PITCH_INPUT].getVoltage());
 			
@@ -104,7 +104,7 @@ struct BD_synCret : Module {
 				args.sampleTime,
 				freq_hz,
 				wasm_inputs,
-				CACHESIZE,
+				cachesize,
 				phase
 			);
 
@@ -114,12 +114,12 @@ struct BD_synCret : Module {
         	}
 
 			// update the current phase
-			phase = ComputePhaseAfterNumSamples(CACHESIZE, phase, args.sampleRate, freq_hz);
+			phase = ComputePhaseAfterNumSamples(cachesize, phase, args.sampleRate, freq_hz);
 		}
 		
 		if (output_buf != nullptr) {
-			outputs[OUT_L_OUTPUT].setVoltage(output_buf[args.frame % CACHESIZE]);
-			outputs[OUT_R_OUTPUT].setVoltage(output_buf[args.frame % CACHESIZE]);
+			outputs[OUT_L_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
+			outputs[OUT_R_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
 		}
 		else {
 			outputs[OUT_L_OUTPUT].setVoltage(-5.0);

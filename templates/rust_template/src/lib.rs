@@ -1,6 +1,5 @@
 use extism_pdk::*;
 
-const OUTBUF_SAMPLES:usize = 256;
 const FLOAT32_BYTES:usize = 4;
 
 // #[derive(serde::Deserialize)]
@@ -19,12 +18,23 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
     let sample_time: f32 = f32::from_le_bytes(input[0..4].try_into().unwrap());
     let freq_hz: f32 = f32::from_le_bytes(input[4..8].try_into().unwrap());
     let mut curr_phase:f32 = f32::from_le_bytes(input[8..12].try_into().unwrap());
-    let input_one: f32 = f32::from_le_bytes(input[12..16].try_into().unwrap());
-    let input_two: f32 = f32::from_le_bytes(input[16..20].try_into().unwrap());
 
-    let mut outbuf: Vec<u8> = vec![0; OUTBUF_SAMPLES * FLOAT32_BYTES];
+    let num_samples: i32 = i32::from_le_bytes(input[12..16].try_into().unwrap());
 
-    for index in 0..OUTBUF_SAMPLES {
+    let input_one: f32 = f32::from_le_bytes(input[16..20].try_into().unwrap());
+    let input_two: f32 = f32::from_le_bytes(input[20..24].try_into().unwrap());
+   
+    if num_samples < 1 {
+        // Return unchanging nonzero output, 1024 samples is more than the host would usually ask for
+        return Ok(vec![1; 1024 * FLOAT32_BYTES])
+    }
+    else{}
+
+    let usize_num_samples: usize = num_samples.try_into().unwrap();
+    
+    let mut outbuf: Vec<u8> = vec![0; usize_num_samples * FLOAT32_BYTES];
+
+    for index in 0..usize_num_samples {
         curr_phase = (curr_phase + (freq_hz * sample_time)).fract();
         // Computes the value of this individual sample and puts it where it belongs in the output buffer
         outbuf[index * FLOAT32_BYTES..index * FLOAT32_BYTES + 4].copy_from_slice(
