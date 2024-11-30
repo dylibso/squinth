@@ -1,8 +1,5 @@
 use extism_pdk::*;
 
-// TODO: this is bad I think, will not translate well to other templates
-// static mut PHASE:f32 = 0.0;
-
 const OUTBUF_SAMPLES:usize = 256;
 const FLOAT32_BYTES:usize = 4;
 
@@ -39,7 +36,7 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
 }
 
 pub fn pitched_sine(
-    _freq_hz:f32, // No longer necessary since the phase is provided, but allows ppl to make synths that change with pitch
+    _freq_hz:f32, // No longer required since the phase is provided, but allows ppl to make synths that change with pitch
     phase:f32,
     input_one:f32,
     input_two:f32,
