@@ -10,9 +10,16 @@ struct ExtismArgs
 {
 	float sample_time;
     float freq_hz;
+    float curr_phase;
 	float input_one;
 	float input_two;
 };
+
+float ComputePhaseAfterNumSamples(
+        int num_samples,
+        float curr_phase,
+        float sample_rate,
+        float freq_hz);
 
 ExtismPlugin* LoadExtismPlugin(std::string, bool);
 
@@ -21,7 +28,9 @@ float* ComputeAudioSamplesMonophonic(
     float sample_time,
     float freq_hz,
     float inputs[6],
-    size_t num_samples);
+    size_t num_samples,
+    float curr_phase
+    );
 
 void ComputeAudioSamplesPolyphonic(
     ExtismPlugin* plugin,

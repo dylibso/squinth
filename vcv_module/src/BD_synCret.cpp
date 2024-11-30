@@ -74,6 +74,8 @@ struct BD_synCret : Module {
 	const float* output_buf = nullptr;
 	TextDisplay* text_display = nullptr;
 
+	float phase = 0.0f; // the current phase of the waveform
+
 	void process(const ProcessArgs& args) override {
 		
 		// exit early if the plugin has not been set
@@ -102,13 +104,17 @@ struct BD_synCret : Module {
 				args.sampleTime,
 				freq_hz,
 				wasm_inputs,
-				CACHESIZE
+				CACHESIZE,
+				phase
 			);
 
 			if (output_buf == nullptr) {
             	DEBUG("ERROR: Output buffer is NULL after ComputeAudioSamplesMonophonic()");
             	return;
         	}
+
+			// update the current phase
+			phase = ComputePhaseAfterNumSamples(CACHESIZE, phase, args.sampleRate, freq_hz);
 		}
 		
 		if (output_buf != nullptr) {
