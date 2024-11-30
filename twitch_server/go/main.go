@@ -5,17 +5,45 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/gempir/go-twitch-irc/v4"
 	"github.com/joho/godotenv"
+	"golang.org/x/exp/maps"
 )
 
+func pluginListWorker(
+	xtpExtension string,
+	xtpToken string,
+	pluginListUpdates chan map[string]xtpBindingInfo,
+	updateRate uint) {
+
+	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+	if err != nil {
+		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+	}
+
+	for {
+		time.Sleep(time.Duration(updateRate) * time.Second)
+
+		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+		if err != nil {
+			fmt.Println("Failed to complete retrieval of plugin list: ", err)
+		}
+
+		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
+			// set the new plugin list and send the update over the channel
+			plugin_list = new_plugin_list
+			pluginListUpdates <- plugin_list
+		}
+	}
+
+}
+
 // TODO: update for the kind of commands that twitch users will send
-func twitchWorker(moduleQueue chan []byte) {
+func twitchWorker(moduleQueue chan []byte, pluginListUpdates chan map[string]xtpBindingInfo) {
 	// or client := twitch.NewAnonymousClient() for an anonymous user (no write capabilities)
 	user := strings.TrimSpace(os.Getenv("TWITCH_USER"))
 	key := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
@@ -24,46 +52,52 @@ func twitchWorker(moduleQueue chan []byte) {
 	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
 	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
 
+	// TODO: another thread that sends to a channel that updates this list periodically?
+	//		will there be any issue with regular requests? ie blocked for suspicious traffic
+	plugin_list, err := fetchPluginList(xtp_extension, xtp_token)
+	if err != nil {
+		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+	}
+
 	client := twitch.NewClient(user, key)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
-		fmt.Println(message.Message)
-		if message.Message[0] == '!' {
-			plugin_name := message.Message[1:]
+		fmt.Println("Received message:", message.Message)
+		if strings.TrimSpace(message.Message)[0] == '!' {
+			plugin_name := strings.TrimSpace(message.Message[1:])
 
 			if strings.Contains(plugin_name, " ") {
-				// TODO: send error msg back thru twitch chat
 				client.Reply(message.Channel, message.ID, "Send a message that follows the format \"!<plugin_name>\"")
 				return
 			}
 
-			// check if plugin exists
-			// TODO: I started on a system that would make  a local copy of the registered plugins, but it's not essential
-			// 		would lend itself to more informative error messaging though. And lend itself to showing the users what is available
-
-			plugin, err := getWasmByPluginName(plugin_name, xtp_extension, xtp_token)
-			if err != nil { // TODO: consolidate magic number
-				client.Reply(message.Channel, message.ID, fmt.Sprintf("Error while trying to fetch plugin: %s", err))
+			wasmFile, err := getWasmByPluginName(plugin_name, xtp_extension, xtp_token)
+			if err != nil {
+				fmt.Printf("Error while trying to fetch plugin: %s", err)
+				client.Reply(message.Channel, message.ID,
+					fmt.Sprintf("Plugin \"%s\" was not found. Please try one of these plugins:\n%s",
+						plugin_name, strings.Join(maps.Keys(plugin_list), "\n")),
+				)
 				return
 			}
 
 			// TODO: consolidate magic number
 			if len(moduleQueue) == 16 {
-				client.Reply(message.Channel, message.ID, "The command buffer is full, blocking until another module is consumed")
+				client.Reply(message.Channel, message.ID, "The queue is full, blocking until another module is consumed")
 			}
-			moduleQueue <- plugin
-			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin))
+			moduleQueue <- wasmFile
+			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin_name))
 		}
 	})
 
 	client.OnUserJoinMessage(func(message twitch.UserJoinMessage) {
-		client.Say(message.Channel, "WELCOME: "+message.User)
+		client.Say(message.Channel, "WELCOME: "+message.User+"!")
 	})
 
 	fmt.Println("Joining ", channel, "...")
 	client.Join(channel)
 
-	err := client.Connect()
+	err = client.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -169,11 +203,15 @@ func main() {
 		panic(err)
 	}
 
+	_, err = fetchPluginList(strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID")), strings.TrimSpace(os.Getenv("XTP_TOKEN")))
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 	// queue of syth modules
-	moduleQueue := make(chan []byte, 16)
+	// moduleQueue := make(chan []byte, 16)
 
-	go fakeTwitchWorker(moduleQueue, "zig_template")
-	go wasmModServerWorker(moduleQueue)
+	// go fakeTwitchWorker(moduleQueue, "zig_template")
+	// go wasmModServerWorker(moduleQueue)
 
-	select {}
+	// select {}
 }

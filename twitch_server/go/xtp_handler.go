@@ -14,36 +14,39 @@ type xtpBindingInfo struct {
 	ContentAddress string    `json:"contentAddress"`
 }
 
-// func epPlugins(pluginName string, xtpToken string) (bool, error) {
-// 	url := "https://xtp.dylibso.com/api/v1/extension-points/ext_01j9hn0bshfh2shvdxk9xz7zys/bindings/"
-// 	client := &http.Client{}
+func fetchPluginList(extensionID string, xtpToken string) (map[string]xtpBindingInfo, error) {
+	url := "https://xtp.dylibso.com/api/v1/extension-points/ext_01j9hn0bshfh2shvdxk9xz7zys/bindings/"
+	client := &http.Client{}
 
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		return false, fmt.Errorf("error creating request: %v", err)
-// 	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %v", err)
+	}
 
-// 	req.Header.Add("Authorization", "Bearer "+xtpToken)
+	req.Header.Add("Authorization", "Bearer "+xtpToken)
 
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		return false, fmt.Errorf("error making request: %v", err)
-// 	}
-// 	if resp.StatusCode != 200 {
-// 		fmt.Printf("\nResponse code: %v encountered while trying to fetch from, %v\n", resp.StatusCode, url)
-// 		return false, fmt.Errorf("code %d returned in response to ", resp.StatusCode)
-// 	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %v", err)
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("code %d returned in response to ", resp.StatusCode)
+	}
 
-// 	defer resp.Body.Close()
+	defer resp.Body.Close()
 
-// 	var result map[string]any
-// 	var json_bytes []byte
-// 	resp.Body.Read(json_bytes)
-// 	json.Unmarshal(json_bytes, &result)
-// 	for key, value := range result {
-// 		plugins := result["foo"].(map[string]any)
-// 	}
-// }
+	var result map[string]xtpBindingInfo
+	json_bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(json_bytes, &result)
+	if err != nil {
+		return nil, fmt.Errorf("errro encountered while unmarshaling json data: %v", err)
+	}
+
+	return result, nil
+}
 
 func getWasmFile(contentAddress string, xtpToken string) ([]byte, error) {
 	url := "https://xtp.dylibso.com/api/v1/c/" + contentAddress
@@ -78,6 +81,33 @@ func getWasmFile(contentAddress string, xtpToken string) ([]byte, error) {
 }
 
 func getWasmByPluginName(pluginName string, extensionID string, xtpToken string) ([]byte, error) {
+
+	// // check if plugin exists
+
+	// if existingList != nil {
+	// 	_, isMapContainsKey := existingList[pluginName]
+	// 	if isMapContainsKey {
+	// 		// key exists in the plugin info map
+	// 		fmt.Println("Found plugin: ", plugin_name)
+	// 	} else {
+	// 		// key does not exist
+	// 		fmt.Println(plugin_name, " was not found, fetching updated list...")
+	// 		plugin_list, err = fetchPluginList(xtp_extension, xtp_token)
+	// 		if err != nil {
+	// 			fmt.Println(err)
+	// 			return
+	// 		}
+	// 		_, isMapContainsKey := plugin_list[plugin_name]
+	// 		if !isMapContainsKey {
+	// 			client.Reply(message.Channel, message.ID,
+	// 				fmt.Sprintf("Plugin \"%s\" was not found. Please try one of these plugins:\n%s",
+	// 					plugin_name, strings.Join(maps.Keys(plugin_list), "\n")),
+	// 			)
+	// 			return
+	// 		}
+	// 	}
+	// }
+
 	url := "https://xtp.dylibso.com/api/v1/extension-points/" + extensionID + "/bindings/"
 	client := &http.Client{}
 
@@ -103,10 +133,7 @@ func getWasmByPluginName(pluginName string, extensionID string, xtpToken string)
 		return nil, fmt.Errorf("error decoding JSON: %v", err)
 	}
 
-	fmt.Println(data)
-
 	for name, metadata := range data {
-		fmt.Println(name)
 		if pluginName == name {
 			fmt.Printf("\nFOUND: %s - Downloading its .wasm module file...\n", pluginName)
 			wasmBytes, err := getWasmFile(metadata.ContentAddress, xtpToken)
