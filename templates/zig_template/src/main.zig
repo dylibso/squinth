@@ -1,3 +1,5 @@
+// TODO: IS USING OLD VERSION OF INTERFACE, WAIT UNTIL YOU ARE MORE SURE OF INTERFACE BEFORE BRINGING IT UP TO DATE
+
 const schema = @import("schema.zig");
 
 const allocator = std.heap.wasm_allocator;

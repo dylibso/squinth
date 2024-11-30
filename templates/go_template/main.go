@@ -1,3 +1,5 @@
+// TODO: IS USING OLD VERSION OF INTERFACE, WAIT UNTIL YOU ARE MORE SURE OF INTERFACE BEFORE BRINGING IT UP TO DATE
+
 // Note: run `go doc -all` in this package to see all of the types and functions available.
 // ./pdk.gen.go contains the domain types from the host where your plugin will run.
 package main
