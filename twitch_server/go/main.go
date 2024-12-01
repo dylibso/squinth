@@ -37,6 +37,10 @@ func pluginListWorker(
 			// set the new plugin list and send the update over the channel
 			plugin_list = new_plugin_list
 			pluginListUpdates <- plugin_list
+			fmt.Println("----- AVAILABLE PLUGINS -----")
+			for plugin_name := range maps.Keys(plugin_list) {
+				fmt.Println("- ", plugin_name)
+			}
 		}
 	}
 
@@ -71,12 +75,30 @@ func twitchWorker(moduleQueue chan []byte, pluginListUpdates chan map[string]xtp
 				return
 			}
 
-			wasmFile, err := getWasmByPluginName(plugin_name, xtp_extension, xtp_token)
+			select {
+			case new_list := <-pluginListUpdates:
+				plugin_list = new_list
+				fmt.Println("Updated List")
+			default:
+			}
+
+			pluginInfo, exists := plugin_list[plugin_name]
+
+			if !exists {
+				client.Reply(
+					message.Channel,
+					message.ID,
+					fmt.Sprintf("Plugin >%s< was not found int the plugin list. Please try one of these plugins:\n%s",
+						plugin_name, strings.Join(maps.Keys(plugin_list), "\n"),
+					),
+				)
+			}
+
+			wasmFile, err := getWasmFile(pluginInfo.ContentAddress, xtp_token)
 			if err != nil {
 				fmt.Printf("Error while trying to fetch plugin: %s", err)
 				client.Reply(message.Channel, message.ID,
-					fmt.Sprintf("Plugin \"%s\" was not found. Please try one of these plugins:\n%s",
-						plugin_name, strings.Join(maps.Keys(plugin_list), "\n")),
+					fmt.Sprintf("An Error occurred while trying to fetch >%s< :(", plugin_name),
 				)
 				return
 			}
