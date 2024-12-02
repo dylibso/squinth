@@ -1,3 +1,15 @@
+TODO: REMOVE --- DEV NOTE! use these sites to help set up your twitch variables
+
+USE TWITCH-CLI app that twitch provides to get your oauth token, run "twitch configure" with CLIENT id and CLIENT secret, then run "twitch token" to get a new OAUTH
+look at your dev console to get the CLIENT ID of your app that is used to generate the oauth
+
+the  !!!! USER ID !!! is DIFFERENT THAN THE CLIENT ID, client id is just for the app and for generating oauth. This is a number assoc. with your account. Use this to find it (I'm sure there is another way)
+https://www.streamweasels.com/tools/convert-twitch-username-%20to-user-id/
+
+WAIT NEVERMIND I USED A TWITCH TOKEN GENERATOR THAT I CONNECTED TO MY TWITCH ACCOUNT, I dont think we will wanna use this with the official dylibso account, but I have no idea how this stuff works and I'm pissed off
+https://twitchtokengenerator.com/
+
+
 # sQuinth by Extism!
 
 A demonstration of collaborative audio programming via XTP, Extism, VCV Rack, and Twitch 

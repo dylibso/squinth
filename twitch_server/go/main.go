@@ -47,23 +47,26 @@ func pluginListWorker(
 }
 
 // TODO: update for the kind of commands that twitch users will send
-func twitchWorker(moduleQueue chan []byte, pluginListUpdates chan map[string]xtpBindingInfo) {
+func twitchWorker(
+	moduleQueue chan []byte,
+	pluginListUpdates chan map[string]xtpBindingInfo,
+	xtpExtension string,
+	xtpToken string,
+) {
 	// or client := twitch.NewAnonymousClient() for an anonymous user (no write capabilities)
-	user := strings.TrimSpace(os.Getenv("TWITCH_USER"))
-	key := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
-	channel := strings.TrimSpace(os.Getenv("CHANNEL"))
+	// user_id := strings.TrimSpace(os.Getenv("TWITCH_USER_ID"))
+	oauth := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
 
-	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
-	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
+	channel := strings.TrimSpace(os.Getenv("CHANNEL"))
 
 	// TODO: another thread that sends to a channel that updates this list periodically?
 	//		will there be any issue with regular requests? ie blocked for suspicious traffic
-	plugin_list, err := fetchPluginList(xtp_extension, xtp_token)
+	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
 	if err != nil {
 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
 	}
 
-	client := twitch.NewClient(user, key)
+	client := twitch.NewClient("dpmason", oauth)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println("Received message:", message.Message)
@@ -94,7 +97,7 @@ func twitchWorker(moduleQueue chan []byte, pluginListUpdates chan map[string]xtp
 				)
 			}
 
-			wasmFile, err := getWasmFile(pluginInfo.ContentAddress, xtp_token)
+			wasmFile, err := getWasmFile(pluginInfo.ContentAddress, xtpToken)
 			if err != nil {
 				fmt.Printf("Error while trying to fetch plugin: %s", err)
 				client.Reply(message.Channel, message.ID,
@@ -127,9 +130,12 @@ func twitchWorker(moduleQueue chan []byte, pluginListUpdates chan map[string]xtp
 
 // --------------------------------------------------------------------------------------
 
-func fakeTwitchWorker(moduleQueue chan []byte, pluginName string) {
-	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
-	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
+func fakeTwitchWorker(
+	moduleQueue chan []byte,
+	pluginName string,
+	xtpExtension string,
+	xtpToken string,
+) {
 
 	// Every 5 seconds fetch the same plugin and add it to the queue to simulate twitch user activity
 	for {
@@ -138,8 +144,8 @@ func fakeTwitchWorker(moduleQueue chan []byte, pluginName string) {
 
 		mod, err := getWasmByPluginName(
 			pluginName,
-			xtp_extension,
-			xtp_token,
+			xtpExtension,
+			xtpToken,
 		)
 
 		if mod == nil || err != nil {
@@ -225,15 +231,17 @@ func main() {
 		panic(err)
 	}
 
-	_, err = fetchPluginList(strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID")), strings.TrimSpace(os.Getenv("XTP_TOKEN")))
-	if err != nil {
-		fmt.Println("Error: ", err)
-	}
+	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
+	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
+
 	// queue of syth modules
-	// moduleQueue := make(chan []byte, 16)
+	moduleQueue := make(chan []byte, 16)
+	pluginListUpdates := make(chan map[string]xtpBindingInfo, 1)
 
 	// go fakeTwitchWorker(moduleQueue, "zig_template")
-	// go wasmModServerWorker(moduleQueue)
+	go pluginListWorker(xtp_extension, xtp_token, pluginListUpdates, 5)
+	go twitchWorker(moduleQueue, pluginListUpdates, xtp_extension, xtp_token)
+	go wasmModServerWorker(moduleQueue)
 
-	// select {}
+	select {}
 }
