@@ -76,8 +76,40 @@ struct BD_synCret : Module {
 
 	float phase = 0.0f; // the current phase of the waveform
 
-	void process(const ProcessArgs& args) override {
+	void load_wasm(std::string path, bool is_url){
+		DEBUG("Loading wasm from supplied path %s", path.c_str());
 		
+		// Attempt to load a module from a file or URL.
+		// Try/Catch avoids assignment if initialization fails
+		try {
+			ExtismPlugin *tmp_plugin = LoadExtismPlugin(path, is_url);
+			if (plugin) free(plugin); // free old plugin
+			plugin = tmp_plugin;
+			tmp_plugin = nullptr;
+		}
+		catch(char *error_msg){
+			DEBUG("Failed to initialize extism module with message: %s", error_msg);
+		}
+		
+		std::string label_string = path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
+		this->text_display->text = label_string.c_str();
+		DEBUG("Label String: %s", label_string.c_str());
+		
+		DEBUG("Plugin Loaded Successfully");
+
+		return;
+	}
+
+	void process(const ProcessArgs& args) override {
+		// periodically ping the twitch worker for a new module
+		// TODO: make this work in sync with an input clock. Module loads will be in-tempo
+		// 		if clock not connected use this arbitrary number, else on clock trigger check
+		if (args.frame % 80000 == 0) {
+			DEBUG("Pinging the twitch worker at localhost:5309");
+			// if this fails the currently loaded plugin will be kept
+			load_wasm("http://0.0.0.0:5309/module-queue", true);
+		}
+
 		// exit early if the plugin has not been set
 		if(plugin == nullptr){
 			outputs[OUT_L_OUTPUT].setVoltage(0.0f);
@@ -122,34 +154,10 @@ struct BD_synCret : Module {
 			outputs[OUT_R_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
 		}
 		else {
+			// Error Code For Nullptr Plugin
 			outputs[OUT_L_OUTPUT].setVoltage(-5.0);
 			outputs[OUT_R_OUTPUT].setVoltage(-5.0);
 		}
-
-		return;
-	}
-
-	void load_wasm(std::string path, bool is_url){
-		DEBUG("Loading wasm from supplied path %s", path.c_str());
-		
-		
-		// Attempt to load a module from a file or URL.
-		// Try/Catch avoids assignment if initialization fails
-		try {
-			ExtismPlugin *tmp_plugin = LoadExtismPlugin(path, is_url);
-			if (plugin) free(plugin); // free old plugin
-			plugin = tmp_plugin;
-			tmp_plugin = nullptr;
-		}
-		catch(char *error_msg){
-			DEBUG("Failed to initialize extism module with message: %s", error_msg);
-		}
-		
-		std::string label_string = path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
-		this->text_display->text = label_string.c_str();
-		DEBUG("Label String: %s", label_string.c_str());
-		
-		DEBUG("Plugin Loaded Successfully");
 
 		return;
 	}
