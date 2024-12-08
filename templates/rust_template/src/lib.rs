@@ -19,10 +19,11 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
     let freq_hz: f32 = f32::from_le_bytes(input[4..8].try_into().unwrap());
     let mut curr_phase:f32 = f32::from_le_bytes(input[8..12].try_into().unwrap());
 
-    let num_samples: i32 = i32::from_le_bytes(input[12..16].try_into().unwrap());
+    let time_position: f32 = f32::from_le_bytes(input[12..16].try_into().unwrap());
 
-    let input_one: f32 = f32::from_le_bytes(input[16..20].try_into().unwrap());
-    let input_two: f32 = f32::from_le_bytes(input[20..24].try_into().unwrap());
+    let num_samples: i32 = i32::from_le_bytes(input[16..20].try_into().unwrap());
+    let input_one: f32 = f32::from_le_bytes(input[20..24].try_into().unwrap());
+    let input_two: f32 = f32::from_le_bytes(input[24..28].try_into().unwrap());
    
     if num_samples < 1 {
         // Return unchanging nonzero output, 1024 samples is more than the host would usually ask for
