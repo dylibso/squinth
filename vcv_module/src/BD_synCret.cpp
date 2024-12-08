@@ -137,7 +137,8 @@ struct BD_synCret : Module {
 				freq_hz,
 				wasm_inputs,
 				cachesize,
-				phase
+				phase,
+				1.0 // TODO: replace with a time position tracker
 			);
 
 			if (output_buf == nullptr) {
@@ -152,11 +153,6 @@ struct BD_synCret : Module {
 		if (output_buf != nullptr) {
 			outputs[OUT_L_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
 			outputs[OUT_R_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
-		}
-		else {
-			// Error Code For Nullptr Plugin
-			outputs[OUT_L_OUTPUT].setVoltage(-5.0);
-			outputs[OUT_R_OUTPUT].setVoltage(-5.0);
 		}
 
 		return;
