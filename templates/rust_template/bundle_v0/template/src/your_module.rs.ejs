@@ -1,0 +1,35 @@
+//mod pdk;
+//use pdk::*;
+//use extism_pdk::*;
+
+/**
+ * A simple example of saw wave generator plugin
+ */
+
+// Phase represents the percentage progress that the wave has made through the wavelength
+//  10
+//    |\    |\    |\    @\    @
+//    | \   | \   | \   | \   |
+//  --|--@--|--@--|--\--|--\--|--
+//    |   \ |   \ |   \ |   \ |
+//    |    \|    \|    \|    \|
+// -10   ▲     ▲        ▲     ▲
+//       │     │        │     │
+//      0.5   0.5      0.0   0.0
+//               PHASE
+
+// lfoOne and lfoTwo are the current values (-10 to 10) of two "Low Frequency Oscillators",
+// waves that can be used to change certain factors over time. for example, amplitude.
+// Changing the amplitude would make the wave louder and quieter over time. Think of it like
+// automatically turning the volume knob up and down according to a slow sine wave.
+
+// "Modulation" is the word typically used to describe these sorts of procedural changes
+
+// the frequency is taken care of for you, but is is also provided here in hertz if you would
+// like the synth behvior to change (modulate) according the frequency it is generating
+
+pub fn wave(_freq_hz: f32, phase: f32, input_one: f32, input_two: f32) -> f32 {
+    // Compute the saw output
+    let amplitude: f32 = (phase * -20.0) + 10.0;
+    amplitude
+}
