@@ -28,8 +28,16 @@
 // the frequency is taken care of for you, but is is also provided here in hertz if you would
 // like the synth behvior to change (modulate) according the frequency it is generating
 
-pub fn wave(_freq_hz: f32, phase: f32, input_one: f32, input_two: f32) -> f32 {
-    // Compute the saw output
-    let amplitude: f32 = (phase * -20.0) + 10.0;
-    amplitude
+<% schema.exports.forEach(ex => { -%>
+<% if (hasComment(ex)) { -%>
+// <%- formatCommentBlock(ex.description, "// ") %>
+<% } -%>
+pub(crate) fn <%= formatIdentifier(ex.name) %>(<%if (ex.input) { %>_input: <%- toRustType(ex.input) %> <% } %>) -> Result<<%if (ex.output) { %> <%- toRustType(ex.output) %> <% } else { %> () <% } %>, Error> {
+	<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'rust').length > 0) { -%>
+		<%- codeSamples(ex, 'rust')[0].source %>
+	<% } else { -%>
+    todo!("Implement <%= formatIdentifier(ex.name) %>")
+	<% } -%>
 }
+
+<% }) %>
