@@ -1,0 +1,16 @@
+declare module 'main' {
+<% schema.exports.forEach(ex => { -%>
+  export function <%- ex.name %>(): I32;
+<% }) -%>
+}
+
+<% if (schema.imports.length > 0) { -%>
+declare module 'extism:host' {
+  interface user {
+<% schema.imports.forEach(im => { -%>
+  <%- im.name %>(<% if (im.input) { %>ptr: I64<% } %>)<% if (im.output) { %>: I64<% } %>;
+<% }) -%>
+  }
+}
+<% } -%>
+

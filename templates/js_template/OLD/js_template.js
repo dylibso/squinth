@@ -1,5 +1,6 @@
 // TODO: IS USING OLD VERSION OF INTERFACE, WAIT UNTIL YOU ARE MORE SURE OF INTERFACE BEFORE BRINGING IT UP TO DATE
 
+import { wave } from './your_module.js';
 
 /**
  * A simple example of saw wave generator plugin
@@ -52,7 +53,7 @@ function batch_compute_wf() {
   const lfo_two = input_buffer[3];
   
   for (let sample = 0; sample < floatbuf.length; sample++) {
-    floatbuf[sample] = compute_saw(sample_time, freq_hz, lfo_one, lfo_two);
+    floatbuf[sample] = wave(sample_time, freq_hz, lfo_one, lfo_two);
   }
 
   Host.outputBytes(floatbuf.buffer);

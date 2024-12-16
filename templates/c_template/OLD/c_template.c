@@ -14,7 +14,7 @@ static float PHASE = 0.0;
 
 float compute_saw(float timeElapsed, float freq, float lfoOne, float lfoTwo) {
   PHASE = fmod(PHASE + (freq * timeElapsed), 1.0); // gets the remainder in order to compute the current phase  
-  float amplitude = (PHASE - 0.5) * -2.0; // calculates output amplitude of saw from 10 to -10 "modulated" by LFO One
+  float amplitude = (PHASE - 0.5) * -20.0; // calculates output amplitude of saw from 10 to -10 "modulated" by LFO One
 
   return amplitude * lfoOne;
 }
