@@ -1,7 +1,7 @@
 rm vcv_module/res/*.wasm;
 
 (cd templates/rust_template; ./rebuild.sh;);
-cp templates/rust_template/target/wasm32-unknown-unknown/release/rust_template.wasm vcv_module/res;
+cp templates/rust_template/rust_plugin/target/wasm32-unknown-unknown/release/plugin.wasm vcv_module/res/rust_plugin.wasm;
 
 (cd templates/js_template; extism-js -i js_template.d.ts js_template.js -o js_template.wasm;);
 cp templates/js_template/js_template.wasm vcv_module/res;

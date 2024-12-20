@@ -1,0 +1,23 @@
+#include "pdk.gen.hpp"
+
+<% for (const func of schema.exports) { %>
+/**
+ * <%- formatCommentBlock(func.description) %>
+<% if (func.input || func.output) { -%>
+ *
+<% } -%>
+<% if (func.input) { -%>
+ * @param input <%- formatCommentBlock(func.input.description) %>
+<% } -%>
+<% if (func.output) { -%>
+ * @return <%- formatCommentBlock(func.output.description) %>
+<% } -%>
+*/
+<%- getExportReturnType(func) -%> impl::<%- func.name-%>(<%- getExportParamType(func) -%> <%- getParamName(func) -%>) {
+    <% if (featureFlags['stub-with-code-samples'] && codeSamples(func, 'c++').length > 0) { -%>
+      <%- codeSamples(func, 'c++')[0].source %>
+    <% } else { -%>
+    return std::unexpected(pdk::Error::not_implemented);
+    <% } -%>
+}
+<% } -%>

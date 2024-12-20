@@ -1,8 +1,6 @@
 target/
 *.lock
-/extism
-/vcv_module/build
-/vcv_module/*.so
+extism/
 *.wasm
 dist/
 *.mod
@@ -12,3 +10,17 @@ dist/
 *xtp*
 zig-out
 *zig-cache
+.vscode/
+build/
+dist/
+*.so
+*.dylib
+*.dll
+.DS_Store
+.vscode
+.env
+*.blend1
+node_modules/
+package*.json
+.xtp/
+rust_plugin/
