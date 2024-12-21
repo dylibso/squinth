@@ -4,7 +4,6 @@ mod your_module;
 use pdk::*;
 use extism_pdk::*;
 
-
 const FLOAT32_BYTES:usize = 4;
 
 #[plugin_fn]
@@ -29,24 +28,66 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
 
     let mut outbuf: Vec<u8> = vec![0; usize_num_samples * FLOAT32_BYTES];
 
-    for sample_no in 1..usize_num_samples+1 {
-
+    for sample_no in 0..usize_num_samples {
+        
+        curr_phase = (curr_phase + (freq_hz * sample_time * sample_no as f32)).fract();
+        
         // TODO: I'm not a fan of the constant reinitialization here, but there is friction between how XTP
         //    currently works and the way I would ideally like to pass things around in rust. Specifically
         //    the user defined function does not have a way to accept a reference rather than a copy in a templated way
-        let wave_args:WaveArgs = WaveArgs {
+        let wave_args:types::WaveArgs = types::WaveArgs {
             freq_hz: freq_hz,
             inputs: vec![input_one, input_two], // TODO: this sux,
-            phase: phase,
+            phase: curr_phase,
             time_position: time_position,
         };
 
-        curr_phase = (curr_phase + (freq_hz * sample_time * sample_no as f32)).fract();
         // Computes the value of this individual sample and puts it where it belongs in the output buffer
-        outbuf[index * FLOAT32_BYTES..index * FLOAT32_BYTES + 4].copy_from_slice(
-            &your_module::wave(wave_args).to_le_bytes(),
+        outbuf[sample_no * FLOAT32_BYTES..sample_no * FLOAT32_BYTES + 4].copy_from_slice(
+            &wave(wave_args).unwrap().to_le_bytes(),
         );
     }
 
     Ok(outbuf)
 }
+
+
+/**
+ * A simple example of saw wave generator plugin
+ */
+
+// Phase represents the percentage progress that the wave has made through the wavelength
+//  10
+//    |\    |\    |\    @\    @
+//    | \   | \   | \   | \   |
+//  --|--@--|--@--|--\--|--\--|--
+//    |   \ |   \ |   \ |   \ |
+//    |    \|    \|    \|    \|
+// -10   ▲     ▲        ▲     ▲
+//       │     │        │     │
+//      0.5   0.5      0.0   0.0
+//               PHASE
+
+// lfoOne and lfoTwo are the current values (-10 to 10) of two "Low Frequency Oscillators",
+// waves that can be used to change certain factors over time. for example, amplitude.
+// Changing the amplitude would make the wave louder and quieter over time. Think of it like
+// automatically turning the volume knob up and down according to a slow sine wave.
+
+// "Modulation" is the word typically used to describe these sorts of procedural changes
+
+// the frequency is taken care of for you, but is is also provided here in hertz if you would
+// like the synth behvior to change (modulate) according the frequency it is generating
+
+<% schema.exports.forEach(ex => { -%>
+<% if (hasComment(ex)) { -%>
+// <%- formatCommentBlock(ex.description, "// ") %>
+<% } -%>
+pub(crate) fn <%= formatIdentifier(ex.name) %>(<%if (ex.input) { %>_input: <%- toRustType(ex.input) %> <% } %>) -> Result<<%if (ex.output) { %> <%- toRustType(ex.output) %> <% } else { %> () <% } %>, Error> {
+	<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'rust').length > 0) { -%>
+		<%- codeSamples(ex, 'rust')[0].source %>
+	<% } else { -%>
+    todo!("Implement <%= formatIdentifier(ex.name) %>")
+	<% } -%>
+}
+
+<% }) %>
