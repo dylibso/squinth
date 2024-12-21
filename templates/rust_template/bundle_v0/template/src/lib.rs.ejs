@@ -29,23 +29,19 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
     let mut outbuf: Vec<u8> = vec![0; usize_num_samples * FLOAT32_BYTES];
 
     for sample_no in 0..usize_num_samples {
-        
-        curr_phase = (curr_phase + (freq_hz * sample_time * sample_no as f32)).fract();
-        
         // TODO: I'm not a fan of the constant reinitialization here, but there is friction between how XTP
         //    currently works and the way I would ideally like to pass things around in rust. Specifically
         //    the user defined function does not have a way to accept a reference rather than a copy in a templated way
-        let wave_args:types::WaveArgs = types::WaveArgs {
+        let wave_args: types::WaveArgs = types::WaveArgs {
             freq_hz: freq_hz,
             inputs: vec![input_one, input_two], // TODO: this sux,
-            phase: curr_phase,
+            phase: (curr_phase + (freq_hz * sample_time * sample_no as f32)).fract(),
             time_position: time_position,
         };
 
         // Computes the value of this individual sample and puts it where it belongs in the output buffer
-        outbuf[sample_no * FLOAT32_BYTES..sample_no * FLOAT32_BYTES + 4].copy_from_slice(
-            &wave(wave_args).unwrap().to_le_bytes(),
-        );
+        outbuf[sample_no * FLOAT32_BYTES..sample_no * FLOAT32_BYTES + 4]
+            .copy_from_slice(&wave(wave_args).unwrap().to_le_bytes());
     }
 
     Ok(outbuf)
