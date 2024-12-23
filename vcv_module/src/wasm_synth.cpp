@@ -38,6 +38,7 @@ ExtismPlugin* LoadExtismPlugin(std::string path, bool is_url)
     
     // Throw error if failed to load a module from the file or URL
     if(errmsg || !plugin){
+        DEBUG("Error Encountered While Attempting to Load Plugin:");
         DEBUG("%s", errmsg);
         throw errmsg;
     }

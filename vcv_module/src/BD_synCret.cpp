@@ -89,6 +89,7 @@ struct BD_synCret : Module {
 		}
 		catch(char *error_msg){
 			DEBUG("Failed to initialize extism module with message: %s", error_msg);
+			return;
 		}
 		
 		std::string label_string = path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
@@ -104,14 +105,18 @@ struct BD_synCret : Module {
 		// periodically ping the twitch worker for a new module
 		// TODO: make this work in sync with an input clock. Module loads will be in-tempo
 		// 		if clock not connected use this arbitrary number, else on clock trigger check
-		if (args.frame % 80000 == 0) {
-			DEBUG("Pinging the twitch worker at localhost:5309");
-			// if this fails the currently loaded plugin will be kept
-			load_wasm("http://0.0.0.0:5309/module-queue", true);
-		}
+		// TODO: temporarily disabling while testing modules
+		// if (args.frame % 80000 == 0) {
+		// 	DEBUG("Pinging the twitch worker at localhost:5309");
+		// 	// if this fails the currently loaded plugin will be kept
+		// 	load_wasm("http://0.0.0.0:5309/module-queue", true);
+		// }
 
 		// exit early if the plugin has not been set
 		if(plugin == nullptr){
+			if (args.frame % 100000 == 0) {
+				DEBUG("PLUGIN IS NULL");
+			}
 			outputs[OUT_L_OUTPUT].setVoltage(0.0f);
 			outputs[OUT_R_OUTPUT].setVoltage(0.0f);
 			return;
