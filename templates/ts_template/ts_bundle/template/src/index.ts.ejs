@@ -1,0 +1,98 @@
+import * as main from "./main"
+<% if (Object.values(schema.schemas).length > 0) { %>
+import {
+  <% Object.values(schema.schemas).forEach(schema => { -%>
+    <%- schema.name %>,
+  <% }) -%>
+} from './pdk'
+<% } %>
+
+<% schema.exports.forEach(ex => { -%>
+export function <%- ex.name %>(): number {
+  <% if (ex.input) { -%>
+    <% if (isJsonEncoded(ex.input)) { -%>
+      <% if (isBuffer(ex.input)) { -%>
+        const input: <%- toTypeScriptType(ex.input) %> = Host.base64ToArrayBuffer(JSON.parse(Host.inputString()))
+      <% } else if (isObject(ex.input)) { -%>
+        const untypedInput = JSON.parse(Host.inputString())
+        const input = <%- toTypeScriptType(ex.input) %>.fromJson(untypedInput)
+      <% } else { -%>
+        const input: <%- toTypeScriptType(ex.input) %> = JSON.parse(Host.inputString())
+      <% } -%>
+    <% } else if (ex.input.type === 'string') { -%>
+      const input = Host.inputString() <%- (ex.input.$ref && ex.input.$ref.enum) ? `as ${ex.input.$ref.name}` : "" %>
+    <% } else { -%>
+      const input: ArrayBufferLike = Host.inputBytes()
+    <% } -%>
+
+    <% if (ex.output) { -%>
+      const output = main.<%- ex.name %>Impl(input)
+    <% } else { -%>
+      main.<%- ex.name %>Impl(input)
+    <% } -%>
+  <% } else { -%>
+    <% if (ex.output) { -%>
+      const output = main.<%- ex.name %>Impl()
+    <% } else { -%>
+      main.<%- ex.name %>Impl()
+    <% } -%>
+  <% } -%>
+
+  <% if (ex.output) { -%>
+    <% if (isJsonEncoded(ex.output)) { -%>
+      <% if (isBuffer(ex.output)) { -%>
+        Host.outputString(JSON.stringify(Host.arrayBufferToBase64(output)))
+      <% } else if (isObject(ex.output)) { -%>
+        const untypedOutput = <%- toTypeScriptType(ex.output) %>.toJson(output)
+        Host.outputString(JSON.stringify(untypedOutput))
+      <% } else { -%>
+        Host.outputString(JSON.stringify(output))
+      <% } -%>
+    <% } else if (ex.output.type === 'string') { -%>
+      Host.outputString(output)
+    <% } else if (ex.output.type === 'number') { -%>
+      Host.outputBytes(new Float32Array(output).buffer)
+    <% } else { -%>
+      Host.outputBytes(output)
+    <% } -%>
+  <% } -%>
+
+  return 0
+}
+
+<% }) %>
+
+export function batch_compute_wf(): number {
+  var input_buffer = new Float32Array(Host.inputBytes());
+  // TODO: just convert one var to i32 rather than all of them
+  var int_input_buffer = new Int32Array(Host.inputBytes());
+
+  var sampleTime = input_buffer[0];
+  var freqHz = input_buffer[1];
+  var currPhase = input_buffer[2];
+
+  var timePosition = input_buffer[3];
+  var numSamples = int_input_buffer[4];
+
+  var inputOne = input_buffer[5];
+  var inputTwo = input_buffer[6];
+
+  var floatbuf = new Float32Array(numSamples);
+
+  var args: WaveArgs = {
+    freq_hz: freqHz,
+    inputs: [inputOne, inputTwo], // Example input array
+    phase: currPhase,
+    time_position: timePosition
+  };
+
+  for (let sampleNo = 0; sampleNo < floatbuf.length; sampleNo++) {
+    // TODO: instantiate a WaveArgs
+    args.phase = (currPhase + (args.freq_hz * sampleTime * sampleNo)) % 1;
+    floatbuf[sampleNo] = main.waveImpl(args);
+  }
+
+  Host.outputBytes(floatbuf.buffer);
+
+  return 0;
+}
