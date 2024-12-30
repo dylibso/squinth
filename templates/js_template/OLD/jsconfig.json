@@ -1,6 +1,0 @@
-{
-  "compilerOptions": {
-    "lib": [],
-    "types": ["../../crates/core/src/prelude"]
-  }
-}
