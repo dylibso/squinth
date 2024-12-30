@@ -1,5 +1,7 @@
 TODO: REMOVE --- DEV NOTE! use these sites to help set up your twitch variables
 
+Other issue I ran into was updating th extism library that I have installed which is different from the extism CLI or XTP that is installed, you need tom go into the extsim repo and make, make install to bring it up to date.
+
 USE TWITCH-CLI app that twitch provides to get your oauth token, run "twitch configure" with CLIENT id and CLIENT secret, then run "twitch token" to get a new OAUTH
 look at your dev console to get the CLIENT ID of your app that is used to generate the oauth
 
