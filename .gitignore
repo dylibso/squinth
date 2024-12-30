@@ -24,3 +24,5 @@ node_modules/
 package*.json
 .xtp/
 rust_plugin/
+
+templates/*/*_plugin/
