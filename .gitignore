@@ -18,7 +18,8 @@ dist/
 *.blend1
 node_modules/
 package*.json
-.xtp/
 *_plugin/
 vcv_module/res/*.wasm
-templates/zig_template/OLD/
+OLD/
+
+!templates/*/*_bundle/**
