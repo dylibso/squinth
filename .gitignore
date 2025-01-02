@@ -1,13 +1,9 @@
 target/
 *.lock
 extism/
-*.wasm
 dist/
 *.mod
 *.sum
-*pdk*
-!pdk.zig
-*xtp*
 zig-out
 *zig-cache
 .vscode/
@@ -23,6 +19,6 @@ dist/
 node_modules/
 package*.json
 .xtp/
-rust_plugin/
-
-templates/*/*_plugin/
+*_plugin/
+vcv_module/res/*.wasm
+templates/zig_template/OLD/
