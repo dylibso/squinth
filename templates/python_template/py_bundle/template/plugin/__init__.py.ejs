@@ -4,6 +4,7 @@ from typing import Optional, List # noqa: F401
 from datetime import datetime # noqa: F401
 import extism # pyright: ignore
 import plugin
+from array import array
 
 <% if (Object.values(schema.schemas).length > 0){ %>
 from pdk_types import <%- Object.values(schema.schemas).map(schema => pythonTypeName(schema.name)).join(", ") %> # noqa: F401 
@@ -38,3 +39,35 @@ def <%- ex.name %>():
   extism.output(res)
 
 <% }) %>
+
+@extism.plugin_fn
+def batch_compute_wf():
+  input:bytes = extism.input_bytes()
+  
+  input_args = array('f', input)
+  integer_input_args = array('i', input) # TODO: only convert one value
+
+  sampleTime:float   = input_args[0]
+  freqHz:float       = input_args[1]
+  currPhase:float    = input_args[2]
+  timePosition:float = input_args[3]
+  numSamples:int     = integer_input_args[4]
+  inputOne:float     = input_args[5]
+  inputTwo:float     = input_args[6]
+  
+  floatbuf:list = list([0.0] * numSamples)
+
+  args: WaveArgs = WaveArgs(
+    freq_hz=freqHz,
+    inputs=[inputOne, inputTwo], # Example input array
+    phase=currPhase,
+    time_position=timePosition
+  );
+
+  for sampleNo in range(0, numSamples):
+    args.phase = (currPhase + args.freq_hz * sampleTime * sampleNo) % 1.0
+    floatbuf[sampleNo] = plugin.wave(args)
+
+  extism.output( array('f', floatbuf).tobytes() )
+
+  return 0;

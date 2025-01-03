@@ -15,4 +15,7 @@ cp templates/zig_template/zig_plugin/zig-out/bin/plugin.wasm vcv_module/res/zig_
 (cd templates/cpp_template && ./rebuild.sh);
 cp templates/cpp_template/cpp_plugin/dist/plugin.wasm vcv_module/res/cpp_plugin.wasm;
 
+(cd templates/python_template && ./rebuild.sh);
+cp templates/python_template/py_plugin/plugin.wasm vcv_module/res/py_plugin.wasm;
+
 (cd vcv_module; ./dev_build_and_install.sh;);
