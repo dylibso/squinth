@@ -2,4 +2,3 @@
 make clean; 
 make install;
 # TODO: change name
-cp -r $RACK_USER_DIR/plugins-lin-x64/*synCret* $RACK_USER_DIR/plugins;
