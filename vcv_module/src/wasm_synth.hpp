@@ -11,10 +11,11 @@ struct ExtismArgs
 	float sample_time;
     float freq_hz;
     float curr_phase;
-    float time_position;
     int32_t num_samples;
-	float input_one;
-	float input_two;
+	float input_1;
+	float input_2;
+	float input_3;
+	float input_4;
 };
 
 float ComputePhaseAfterNumSamples(
@@ -29,15 +30,7 @@ float* ComputeAudioSamplesMonophonic(
     ExtismPlugin* plugin,
     float sample_time,
     float freq_hz,
-    float inputs[6]=nullptr,
+    float inputs[4]=nullptr,
     int32_t num_samples=256, // TODO: only 256 is supported due to coordination with plugin modules
-    float curr_phase=0.0, // If you do not set this, the wavelen will start from beginning at the end of each period
-    float time_position=-1.0 // Bar number on the whole number side and progess through the current bar in the decimal
+    float curr_phase=0.0 // If you do not set this, the wavelen will start from beginning at the end of each period
     );
-
-// void ComputeAudioSamplesPolyphonic(
-//     ExtismPlugin* plugin,
-//     float sample_time,
-//     float freq_hz[4],
-//     float poly_output[4][256], // TODO: only 256 is supported due to coordination with wasm modules
-//     float inputs[6]);

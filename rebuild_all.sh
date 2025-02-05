@@ -24,5 +24,9 @@ echo "\nPython"
 (cd templates/python_template && ./rebuild.sh);
 cp templates/python_template/py_plugin/plugin.wasm vcv_module/res/py_plugin.wasm;
 
-echo "\nInstall Module to User VCV Folder"
-(cd vcv_module; ./dev_build_and_install.sh;);
+echo "\nInstall Module to User VCV Folder";
+(cd vcv_module && make clean && make install);
+
+# Install to dev location
+mkdir -p ${RACK_USER_DIR}/plugins;
+cp -r ${RACK_USER_DIR}/plugins-lin-x64/*sQuinth* ${RACK_USER_DIR}/plugins;
