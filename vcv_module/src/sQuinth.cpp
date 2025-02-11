@@ -44,6 +44,8 @@ struct sQuinth : Module {
 	int32_t cachesize = 256;
 
 	const float* output_buf = nullptr;
+	float* right_output_buf = new float[cachesize];
+
 	TextDisplay* text_display = nullptr;
 
 	float phase = 0.0f; // the current phase of the waveform
@@ -106,13 +108,15 @@ struct sQuinth : Module {
 				inputs[I4_INPUT].isConnected() ? (float)inputs[I1_INPUT].getVoltage() : 1.0f
 			};
 
+			// compute the right channel's audio samples
 			output_buf = ComputeAudioSamplesMonophonic(
 				plugin, 
 				args.sampleTime,
 				freq_hz,
 				wasm_inputs,
 				cachesize,
-				phase
+				phase,
+				false
 			);
 
 			if (output_buf == nullptr) {
@@ -120,13 +124,25 @@ struct sQuinth : Module {
             	return;
         	}
 
+			memcpy(right_output_buf, output_buf, cachesize * sizeof(float));
+
+			output_buf = ComputeAudioSamplesMonophonic(
+				plugin, 
+				args.sampleTime,
+				freq_hz,
+				wasm_inputs,
+				cachesize,
+				phase,
+				true
+			);
+
 			// update the current phase
 			phase = ComputePhaseAfterNumSamples(cachesize, phase, args.sampleRate, freq_hz);
 		}
 		
 		if (output_buf != nullptr) {
 			outputs[OUT_L_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
-			outputs[OUT_R_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
+			outputs[OUT_R_OUTPUT].setVoltage(right_output_buf[args.frame % cachesize]);
 		}
 
 		return;
@@ -179,23 +195,32 @@ struct WasmURLItem : MenuItem
 };
 
 struct sQuinthWidget : ModuleWidget {
+	BGPanel *pBackPanel;
+
 	sQuinthWidget(sQuinth* module) {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/sQuinth.svg")));
 
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-		addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-		addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		pBackPanel = new BGPanel();
+		pBackPanel->box.size = box.size;
+		pBackPanel->imagePath = asset::plugin(pluginInstance, "res/sQuinth.png");
+		pBackPanel->visible = false;
+		addChild(pBackPanel);
+		pBackPanel->visible = true;
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(15.24, 77.478)), module, sQuinth::PITCH_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(30.48, 77.478)), module, sQuinth::I1_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(45.72, 77.478)), module, sQuinth::I2_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(60.96, 77.478)), module, sQuinth::I3_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(76.2, 77.478)), module, sQuinth::I4_INPUT));
+		// addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
+		// addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
+		// addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
+		// addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(15.24, 108.713)), module, sQuinth::OUT_L_OUTPUT));
-		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(30.48, 108.713)), module, sQuinth::OUT_R_OUTPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.393, 31.681)), module, sQuinth::PITCH_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(31.826, 20.495)), module, sQuinth::I1_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.392, 23.485)), module, sQuinth::I2_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(54.394, 13.894)), module, sQuinth::I3_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.0, 120.0)), module, sQuinth::I4_INPUT));
+
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(126.485, 90.871)), module, sQuinth::OUT_L_OUTPUT));
+		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(145.156, 89.948)), module, sQuinth::OUT_R_OUTPUT));
 
 		TextDisplay* text_display = createWidget<TextDisplay>(Vec(RACK_GRID_WIDTH, 100.00));
 		addChild(text_display);

@@ -16,6 +16,7 @@ struct ExtismArgs
 	float input_2;
 	float input_3;
 	float input_4;
+    int32_t is_left_channel;
 };
 
 float ComputePhaseAfterNumSamples(
@@ -32,5 +33,6 @@ float* ComputeAudioSamplesMonophonic(
     float freq_hz,
     float inputs[4]=nullptr,
     int32_t num_samples=256, // TODO: only 256 is supported due to coordination with plugin modules
-    float curr_phase=0.0 // If you do not set this, the wavelen will start from beginning at the end of each period
-    );
+    float curr_phase=0.0, // If you do not set this, the wavelen will start from beginning at the end of each period
+    bool is_left_channel=true    
+);
