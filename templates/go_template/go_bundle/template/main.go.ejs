@@ -14,22 +14,24 @@ func BatchComputeWf() (int32, error) {
 
 	var params []float32 = unsafe.Slice((*float32)(unsafe.Pointer(&input[0])), len(input)/4)
 
-	// TODO: convert just the one param in the buffer to int rather than the whole list
-	var numSamples uint32 = uint32(*(*int32)(unsafe.Pointer(&input[4*4])))
-
 	var sampleTime float32 = params[0]
-	var freqHz float32 = params[1]
-	var currPhase float32 = params[2]
-	var timePosition float32 = params[3]
+	var freqHz float32     = params[1]
+	var currPhase float32  = params[2]
+	
+	var numSamples uint32 = uint32(*(*int32)(unsafe.Pointer(&input[3*4])))
+	
+	var inputOne float32   = params[4]
+	var inputTwo float32   = params[5]
+	var inputThree float32 = params[6]
+	var inputFour float32  = params[7]
 
-	var inputOne float32 = params[5]
-	var inputTwo float32 = params[6]
+    var isLeftChannel bool = *(*int32)(unsafe.Pointer(&input[8*4])) > 0
 
 	var args WaveArgs = WaveArgs{
-		FreqHz:       freqHz,
-		Inputs:       []float32{inputOne, inputTwo},
-		Phase:        currPhase,
-		TimePosition: timePosition, // TODO: REMOVE TIME POSITION
+		FreqHz:        freqHz,
+		Inputs:        []float32{inputOne, inputTwo, inputThree, inputFour},
+		Phase:         currPhase,
+		IsLeftChannel: isLeftChannel,
 	}
 
 	outBuf := make([]float32, numSamples)
