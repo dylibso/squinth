@@ -226,7 +226,7 @@ export fn batch_compute_wf() i32 {
         .freq_hz = freqHz,
         .inputs = &inputs,
         .phase = 0.0, // Example: quarter phase
-        .time_position = timePosition, // Example: halfway through
+        .time_position = timePosition, // Example: halfway through // TODO: REMOVE TIME POSITION
     };
 
     var output: [256 * 4]u8 = [1]u8{0} ** (256 * 4);

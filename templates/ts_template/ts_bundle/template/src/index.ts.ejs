@@ -83,7 +83,7 @@ export function batch_compute_wf(): number {
     freq_hz: freqHz,
     inputs: [inputOne, inputTwo], // Example input array
     phase: currPhase,
-    time_position: timePosition
+    time_position: timePosition // TODO: REMOVE TIME POSITION
   };
 
   for (let sampleNo = 0; sampleNo < floatbuf.length; sampleNo++) {

@@ -60,8 +60,7 @@ def batch_compute_wf():
   args: WaveArgs = WaveArgs(
     freq_hz=freqHz,
     inputs=[inputOne, inputTwo], # Example input array
-    phase=currPhase,
-    time_position=timePosition
+    phase=currPhase, # TODO: REMOVE TIME POSITION
   );
 
   for sampleNo in range(0, numSamples):

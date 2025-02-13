@@ -29,7 +29,7 @@ func BatchComputeWf() (int32, error) {
 		FreqHz:       freqHz,
 		Inputs:       []float32{inputOne, inputTwo},
 		Phase:        currPhase,
-		TimePosition: timePosition,
+		TimePosition: timePosition, // TODO: REMOVE TIME POSITION
 	}
 
 	outBuf := make([]float32, numSamples)
