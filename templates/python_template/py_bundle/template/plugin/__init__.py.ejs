@@ -47,20 +47,26 @@ def batch_compute_wf():
   input_args = array('f', input)
   integer_input_args = array('i', input) # TODO: only convert one value
 
-  sampleTime:float   = input_args[0]
-  freqHz:float       = input_args[1]
-  currPhase:float    = input_args[2]
-  timePosition:float = input_args[3]
-  numSamples:int     = integer_input_args[4]
-  inputOne:float     = input_args[5]
-  inputTwo:float     = input_args[6]
+  sampleTime:float = input_args[0]
+  freqHz:float     = input_args[1]
+  currPhase:float  = input_args[2]
+
+  numSamples:int   = integer_input_args[3]
+
+  inputOne:float   = input_args[4]
+  inputTwo:float   = input_args[5]
+  inputThree:float = input_args[6]
+  inputFour:float  = input_args[7]
+
+  isLeftChannel:bool = integer_input_args[8] > 0
   
   floatbuf:list = list([0.0] * numSamples)
 
   args: WaveArgs = WaveArgs(
     freq_hz=freqHz,
     inputs=[inputOne, inputTwo], # Example input array
-    phase=currPhase, # TODO: REMOVE TIME POSITION
+    phase=currPhase,
+    is_left_channel=isLeftChannel
   );
 
   for sampleNo in range(0, numSamples):
