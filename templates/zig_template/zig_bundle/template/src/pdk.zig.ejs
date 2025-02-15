@@ -220,13 +220,13 @@ export fn batch_compute_wf() i32 {
 
     const isLeftChannel: bool = @as(i32, @bitCast(input_mem[32..36].*)) > 0;
 
-    var inputs = [_]f64{ inputOne, inputTwo };
+    var inputs = [_]f64{ inputOne, inputTwo, inputThree, inputFour };
 
     var wave_args = schema.WaveArgs{
         .freq_hz = freqHz,
         .inputs = &inputs,
         .phase = 0.0, // Example: quarter phase
-        .time_position = timePosition, // Example: halfway through // TODO: REMOVE TIME POSITION
+        .isLeftChannel = isLeftChannel, // Example: halfway through
     };
 
     var output: [256 * 4]u8 = [1]u8{0} ** (256 * 4);

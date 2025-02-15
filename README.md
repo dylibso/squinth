@@ -2,7 +2,7 @@
 
 A demonstration of collaborative audio programming via XTP, Extism, VCV Rack, and Twitch!
 
-![Module Panel Design](/vcv_module/res/sQuinth.svg)
+![Module Panel Design](/vcv_module/res/sQuinth.png)
 
 ## Quick Start
 
