@@ -106,24 +106,26 @@ int32_t EXTISM_EXPORTED_FUNCTION(batch_compute_wf) {
 
   float sample_time;
   memcpy(&sample_time, inputData, sizeof(float));
-
   float freq_hz;
   memcpy(&freq_hz, inputData + 4, sizeof(float));
-
   float curr_phase;
   memcpy(&curr_phase, inputData + 8, sizeof(float));
 
-  float time_position;
-  memcpy(&time_position, inputData + 12, sizeof(float));
-
   int32_t num_samples;
-  std::memcpy(&num_samples, inputData + 16, sizeof(int32_t));
+  std::memcpy(&num_samples, inputData + 12, sizeof(int32_t));
   
   float input_one;
-  memcpy(&input_one, inputData + 20, sizeof(float));
-
+  memcpy(&input_one, inputData + 16, sizeof(float));
   float input_two;
-  memcpy(&input_two, inputData + 24, sizeof(float));
+  memcpy(&input_two, inputData + 20, sizeof(float));
+  float input_three;
+  memcpy(&input_three, inputData + 24, sizeof(float));
+  float input_four;
+  memcpy(&input_four, inputData + 28, sizeof(float));
+
+  int32_t is_left_channel_num;
+  memcpy(&is_left_channel_num, inputData + 32, sizeof(int32_t));
+  bool is_left_channel = is_left_channel_num > 0;
 
   std::vector<float> inputs = {input_one, input_two};
 
@@ -135,7 +137,7 @@ int32_t EXTISM_EXPORTED_FUNCTION(batch_compute_wf) {
         inputs,
         freq_hz,
         phase,
-        time_position,
+        is_left_channel
     };
 
     float sample_val = impl::wave(std::move(args)).value();

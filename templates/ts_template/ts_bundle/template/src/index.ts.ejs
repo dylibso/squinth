@@ -71,11 +71,14 @@ export function batch_compute_wf(): number {
   var freqHz = input_buffer[1];
   var currPhase = input_buffer[2];
 
-  var timePosition = input_buffer[3];
-  var numSamples = int_input_buffer[4];
-
-  var inputOne = input_buffer[5];
-  var inputTwo = input_buffer[6];
+  var numSamples = int_input_buffer[3];
+  
+  var inputOne = input_buffer[4];
+  var inputTwo = input_buffer[5];
+  var inputOne = input_buffer[6];
+  var inputTwo = input_buffer[7];
+  
+  var isLeftChannel = int_input_buffer[3] > 0;
 
   var floatbuf = new Float32Array(numSamples);
 
@@ -83,7 +86,7 @@ export function batch_compute_wf(): number {
     freq_hz: freqHz,
     inputs: [inputOne, inputTwo], // Example input array
     phase: currPhase,
-    time_position: timePosition
+    isLeftChannel: isLeftChannel
   };
 
   for (let sampleNo = 0; sampleNo < floatbuf.length; sampleNo++) {

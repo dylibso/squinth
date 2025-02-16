@@ -207,26 +207,26 @@ export fn batch_compute_wf() i32 {
     const input_mem = plugin.getInput() catch unreachable;
     defer allocator.free(input_mem);
 
-    // const sampleTime: f32 = @bitCast(input_mem[0..4].*);
-    // const freqHz: f32 = @bitCast(input_mem[4..8].*);
-    // const lfoOne: f32 = @bitCast(input_mem[8..12].*);
-    // const lfoTwo: f32 = @bitCast(input_mem[12..16].*);
-
     const sampleTime: f64 = @floatCast(@as(f32, @bitCast(input_mem[0..4].*)));
     const freqHz: f64 = @floatCast(@as(f32, @bitCast(input_mem[4..8].*)));
     const currPhase: f64 = @floatCast(@as(f32, @bitCast(input_mem[8..12].*)));
-    const timePosition: f64 = @floatCast(@as(f32, @bitCast(input_mem[12..16].*)));
-    //const numSamples: i32 = @bitCast(input_mem[16..20].*);
-    const inputOne: f64 = @floatCast(@as(f32, @bitCast(input_mem[20..24].*)));
-    const inputTwo: f64 = @floatCast(@as(f32, @bitCast(input_mem[24..28].*)));
+    
+    // const numSamples
 
-    var inputs = [_]f64{ inputOne, inputTwo };
+    const inputOne: f64 = @floatCast(@as(f32, @bitCast(input_mem[16..20].*)));
+    const inputTwo: f64 = @floatCast(@as(f32, @bitCast(input_mem[20..24].*)));
+    const inputThree: f64 = @floatCast(@as(f32, @bitCast(input_mem[24..28].*)));
+    const inputFour: f64 = @floatCast(@as(f32, @bitCast(input_mem[28..32].*)));
+
+    const isLeftChannel: bool = @as(i32, @bitCast(input_mem[32..36].*)) > 0;
+
+    var inputs = [_]f64{ inputOne, inputTwo, inputThree, inputFour };
 
     var wave_args = schema.WaveArgs{
         .freq_hz = freqHz,
         .inputs = &inputs,
         .phase = 0.0, // Example: quarter phase
-        .time_position = timePosition, // Example: halfway through
+        .isLeftChannel = isLeftChannel, // Example: halfway through
     };
 
     var output: [256 * 4]u8 = [1]u8{0} ** (256 * 4);
