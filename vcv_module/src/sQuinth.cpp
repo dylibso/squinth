@@ -213,16 +213,21 @@ struct sQuinthWidget : ModuleWidget {
 		// addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 		// addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
 
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(22.393, 31.681)), module, sQuinth::PITCH_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(31.826, 20.495)), module, sQuinth::I1_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(46.392, 23.485)), module, sQuinth::I2_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(54.394, 13.894)), module, sQuinth::I3_INPUT));
-		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(10.0, 120.0)), module, sQuinth::I4_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.609, 32.823)), module, sQuinth::I1_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.313, 18.636)), module, sQuinth::I2_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.639, 25.073)), module, sQuinth::I3_INPUT));
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(53.387, 12.821)), module, sQuinth::I4_INPUT));
 
+		addInput(createInputCentered<PJ301MPort>(mm2px(Vec(68.622, 06.884)), module, sQuinth::PITCH_INPUT));
+		
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(126.485, 90.871)), module, sQuinth::OUT_L_OUTPUT));
 		addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(145.156, 89.948)), module, sQuinth::OUT_R_OUTPUT));
 
-		TextDisplay* text_display = createWidget<TextDisplay>(Vec(RACK_GRID_WIDTH, 100.00));
+		// TextDisplay* text_display = createWidget<TextDisplay>(Vec(RACK_GRID_WIDTH, 100.00));
+		TextDisplay* text_display = createWidget<TextDisplay>(Vec(36.0 * MM_TO_NVG_UNITS, 67.0 * MM_TO_NVG_UNITS));
+		text_display->box.size = Vec(58.0 * MM_TO_NVG_UNITS, 36.00 * MM_TO_NVG_UNITS);
+
+
 		addChild(text_display);
 		if(module){
 			module->text_display = text_display;
