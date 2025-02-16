@@ -2,8 +2,11 @@
 
 from typing import Optional, List # noqa: F401
 from datetime import datetime # noqa: F401
+import json
 import extism # pyright: ignore
 import plugin
+
+from array import array
 
 <% if (Object.values(schema.schemas).length > 0){ %>
 from pdk_types import <%- Object.values(schema.schemas).map(schema => pythonTypeName(schema.name)).join(", ") %> # noqa: F401 
@@ -21,7 +24,7 @@ from pdk_types import <%- Object.values(schema.schemas).map(schema => pythonType
 # And it returns an output <%- toPythonParamType(imp.output) %> (<%- formatCommentLine(imp.output.description) %>)
 <% } -%>
 @extism.import_fn("extism:host/user", "<%- imp.name %>")
-def <%- pythonFunctionName(imp.name) %>(<% if (imp.input) { -%>input: <%- toPythonParamType(imp.input) %><%} -%>) <% if (imp.output) { %> -> <%- toPythonParamType(imp.output) %><% } %>: # pyright: ignore [reportReturnType]
+def _<%- pythonFunctionName(imp.name) %>(<% if (imp.input) { -%>input: <%- toPythonHostParamType(imp.input) %> <%} -%>) <% if (imp.output) { %> -> <%- toPythonHostParamType(imp.output) %> <% } %>: # pyright: ignore [reportReturnType]
   pass
 <% }) %>
 
@@ -34,7 +37,65 @@ def <%- pythonFunctionName(imp.name) %>(<% if (imp.input) { -%>input: <%- toPyth
 <% } -%>
 @extism.plugin_fn
 def <%- ex.name %>():
-  res = plugin.<%- pythonFunctionName(ex.name) %>(<% if (ex.input) { %> extism.input(<%- toPythonParamType(ex.input) %>) <% } %>)
-  extism.output(res)
+<% if (ex.input) { -%>
+  input = <% if (ex.input.contentType === 'application/x-binary') { %> extism.input_bytes() <% } else { %> extism.input_str() <% } %>
+<% if (ex.input.contentType === 'application/json') { -%>
+<% if (ex.input.xtpType.kind === 'object') { -%>
+  input = <%- toPythonParamType(ex.input) %>.from_json(input)
+<% } else { -%>
+  input = json.loads(input)
+<% } -%>
+<% } -%>
+<% } -%>
+  res = plugin.<%- pythonFunctionName(ex.name) %>(<% if (ex.input) { %> input <% } %>)
+<% if (ex.output) { -%>
+<% if (ex.output.contentType === 'application/x-binary') { %>  extism.output_bytes( <% } else { %>  extism.output_str( <% } %>
+<% if (ex.output.contentType === 'application/json') { -%>
+<% if (ex.output.xtpType.kind === 'object') { -%>
+  res.to_json()
+<% } else { -%>
+  json.dumps(res)
+<% } %>
+<% } else { -%>
+  res
+<% } -%>
+  )
+<% } -%>
+<% }) -%>
 
-<% }) %>
+@extism.plugin_fn
+def batch_compute_wf():
+  input:bytes = extism.input_bytes()
+  
+  input_args = array('f', input)
+  integer_input_args = array('i', input) # TODO: only convert one value
+
+  sampleTime:float = input_args[0]
+  freqHz:float     = input_args[1]
+  currPhase:float  = input_args[2]
+
+  numSamples:int   = integer_input_args[3]
+
+  inputOne:float   = input_args[4]
+  inputTwo:float   = input_args[5]
+  inputThree:float = input_args[6]
+  inputFour:float  = input_args[7]
+
+  isLeftChannel:bool = integer_input_args[8] > 0
+  
+  floatbuf:list = list([0.0] * numSamples)
+
+  args: WaveArgs = WaveArgs(
+    freq_hz=freqHz,
+    inputs=[inputOne, inputTwo, inputThree, inputFour],
+    phase=currPhase,
+    isLeftChannel=isLeftChannel
+  );
+
+  for sampleNo in range(0, numSamples):
+    args.phase = (currPhase + args.freq_hz * sampleTime * sampleNo) % 1.0
+    floatbuf[sampleNo] = plugin.wave(args)
+
+  extism.output( array('f', floatbuf).tobytes() )
+
+  return 0;

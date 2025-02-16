@@ -4,22 +4,45 @@ package main
 
 import "errors"
 
-<% schema.exports.forEach(ex => { %>
-<% if (hasComment(ex)) -%>	
-// <%- formatCommentBlock(ex.description, "// ") %>
-<% if (ex.input && hasComment(ex.input)) { -%>
-// It takes <%- toGolangType(ex.input) %> as input (<%- formatCommentLine(ex.input.description) %>)
-<% } -%>
-<% if (ex.output && hasComment(ex.output)) { -%>
-// And returns <%- toGolangType(ex.output) %> (<%- formatCommentLine(ex.output.description) %>)
-<% } -%>
-<% -%>
-func <%- goName(ex.name) %>(<%- ex.input ? `input ${toGolangType(ex.input)}` : null %>) <%- ex.output ? `(${toGolangType(ex.output)}, error)` : "error" %> {
-	<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'go').length > 0) { -%>
-		<%- codeSamples(ex, 'go')[0].source %>
-	<% } else { -%>
-		// TODO: fill out your implementation here
-		panic("Function not implemented.")
-	<% } -%>
+func BatchComputeWf() (int32, error) {
+	// BatchComputeWF processes the input buffer and outputs the user-defined wave
+	input := pdk.Input()
+	// _ = input
+	if len(input)%4 != 0 { // || len(input)/4 != 7 {
+		return -1, errors.New(fmt.Sprintf("Improper Input Size, %d", len(input)))
+	}
+
+	var params []float32 = unsafe.Slice((*float32)(unsafe.Pointer(&input[0])), len(input)/4)
+
+	var sampleTime float32 = params[0]
+	var freqHz float32     = params[1]
+	var currPhase float32  = params[2]
+	
+	var numSamples uint32 = uint32(*(*int32)(unsafe.Pointer(&input[3*4])))
+	
+	var inputOne float32   = params[4]
+	var inputTwo float32   = params[5]
+	var inputThree float32 = params[6]
+	var inputFour float32  = params[7]
+
+    var isLeftChannel bool = *(*int32)(unsafe.Pointer(&input[8*4])) > 0
+
+	var args WaveArgs = WaveArgs{
+		FreqHz:        freqHz,
+		Inputs:        []float32{inputOne, inputTwo, inputThree, inputFour},
+		Phase:         currPhase,
+		IsLeftChannel: isLeftChannel,
+	}
+
+	outBuf := make([]float32, numSamples)
+
+	//pdk.Log(pdk.LogError, "goop")
+	for sampleNo := 0; sampleNo < len(outBuf); sampleNo++ {
+		args.Phase = float32(math.Mod(float64(currPhase+(args.FreqHz*sampleTime*float32(sampleNo))), 1.0))
+		outBuf[sampleNo], _ = Wave(args)
+	}
+
+	pdk.Output(unsafe.Slice((*byte)(unsafe.Pointer(&outBuf[0])), len(outBuf)*4))
+
+	return 0, nil
 }
-<% }) %>

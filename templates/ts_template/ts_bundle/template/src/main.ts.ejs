@@ -1,0 +1,67 @@
+/**
+ * A simple example of saw wave generator plugin
+ */
+
+// Phase represents the percentage progress that the wave has made through the wavelength
+//  10
+//    |\    |\    |\    @\    @
+//    | \   | \   | \   | \   |
+//  --|--@--|--@--|--\--|--\--|--
+//    |   \ |   \ |   \ |   \ |
+//    |    \|    \|    \|    \|
+// -10   ▲     ▲        ▲     ▲
+//       │     │        │     │
+//      0.5   0.5      0.0   0.0
+//               PHASE
+
+// lfoOne and lfoTwo are the current values (-10 to 10) of two "Low Frequency Oscillators",
+// waves that can be used to change certain factors over time. for example, amplitude.
+// Changing the amplitude would make the wave louder and quieter over time. Think of it like
+// automatically turning the volume knob up and down according to a slow sine wave.
+
+// "Modulation" is the word typically used to describe these sorts of procedural changes
+
+// the frequency is taken care of for you, but is is also provided here in hertz if you would
+// like the synth behvior to change (modulate) according the frequency it is generating
+
+
+<% if (Object.values(schema.schemas).length > 0) { %>
+import {
+  <% Object.values(schema.schemas).forEach(schema => { -%>
+    <%- schema.name %>,
+  <% }) -%>
+} from './pdk'
+<% } %>
+<% if (schema.imports.length > 0) { %>
+import {
+  <% schema.imports.forEach(imp => { -%>
+    <%- imp.name %>,
+  <% }) -%>
+} from './pdk'
+<% } %>
+
+
+<% schema.exports.forEach(ex => { %>
+<% if (hasComment(ex)) -%>
+/**
+ * <%- formatCommentBlock(ex.description) %>
+ *
+<% if (hasComment(ex.input)) { -%>
+ * @param {<%- toTypeScriptType(ex.input) %>} input - <%- formatCommentLine(ex.input.description) %>
+<% } -%>
+<% if (hasComment(ex.output)) { -%>
+ * @returns {<%- toTypeScriptType(ex.output) %>} <%- formatCommentLine(ex.output.description) %>
+<% } -%>
+ */
+<% -%>
+export function <%- ex.name %>Impl(<%- ex.input ? `input: ${toTypeScriptType(ex.input)}`: null %>)<%- ex.output ? `:${toTypeScriptType(ex.output)}` : null %> {
+<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'typescript').length > 0) { -%>
+<%- codeSamples(ex, 'typescript')[0].source %>
+<% } else { -%>
+  // TODO: fill out your implementation here
+  throw new Error("Function not implemented.");
+<% } -%>
+}
+<% }) %>
+
+

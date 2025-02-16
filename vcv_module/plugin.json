@@ -1,9 +1,9 @@
 {
-  "slug": "synCret",
-  "name": "synCret",
+  "slug": "sQuinth",
+  "name": "sQuinth",
   "version": "2.0.0",
   "license": "CC0",
-  "brand": "dp_audio",
+  "brand": "dylibso",
   "author": "dp-mason",
   "authorEmail": "davidpattenmason@gmail.com",
   "authorUrl": "",
@@ -14,9 +14,9 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "BD_synCret",
-      "name": "BD_synCret",
-      "description": "wasm host for vcv rack",
+      "slug": "sQuinth",
+      "name": "sQuinth",
+      "description": "xtp/wasm plugin system for vcv rack",
       "tags": []
     }
   ]

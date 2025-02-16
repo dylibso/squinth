@@ -38,6 +38,7 @@ ExtismPlugin* LoadExtismPlugin(std::string path, bool is_url)
     
     // Throw error if failed to load a module from the file or URL
     if(errmsg || !plugin){
+        DEBUG("Error Encountered While Attempting to Load Plugin:");
         DEBUG("%s", errmsg);
         throw errmsg;
     }
@@ -49,12 +50,11 @@ float* ComputeAudioSamplesMonophonic(
     ExtismPlugin* plugin,
     float sample_time,
     float freq_hz,
-    float inputs[6],
+    float inputs[4],
     int32_t num_samples, // TODO: only 256 is supported due to coordination with plugin modules
     float curr_phase, // If you do not set this, the wavelen will start from beginning at the end of each period
-    float time_position
-    )
-{
+    bool is_left_channel
+){
     if (plugin == NULL){
         DEBUG("ERROR: NULL PLUGIN\n");
         return nullptr;
@@ -69,10 +69,12 @@ float* ComputeAudioSamplesMonophonic(
         sample_time,
         freq_hz,
         curr_phase,
-        time_position,
         num_samples,
         inputs ? inputs[0] : 1.0f,
-        inputs ? inputs[1] : 1.0f // TODO: Accomodate all 6 params in all modules
+        inputs ? inputs[1] : 1.0f,
+        inputs ? inputs[2] : 1.0f,
+        inputs ? inputs[3] : 1.0f,
+        is_left_channel ? 1 : 0
     };
 
     int rc = extism_plugin_call(plugin, "batch_compute_wf", (const uint8_t*)&args, sizeof(ExtismArgs));
@@ -84,28 +86,3 @@ float* ComputeAudioSamplesMonophonic(
 
     return (float*)extism_plugin_output_data(plugin);
 }
-
-// // TODO: Compute Polyphonic output that either makes several calls to ComputeAudioSamplesMonophonic
-// //  and copies memory out each time or does something more sophisticted on the wasm side
-// //  Maybe the template programs could include boilerplate for returning a matrix representing polyphonic output?
-// void ComputeAudioSamplesPolyphonic(
-//     ExtismPlugin* plugin,
-//     float sample_time,
-//     float freq_hz[4],
-//     float poly_output[4][256], // TODO: only 256 is supported due to coordination with wasm modules
-//     float inputs[6]=nullptr
-//     )
-// {
-//     for(int i=0; i<4; i++){
-//         float *voice = ComputeAudioSamplesMonophonic(
-//             plugin,
-//             sample_time,
-//             freq_hz[i],
-//             inputs,
-//             256 // TODO: only 256 is supported due to coordination with wasm modules
-//         );
-//         memcpy(voice, poly_output[i], sizeof(float) * 256);
-//     }
-
-//     return;
-// }
