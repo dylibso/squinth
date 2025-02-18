@@ -24,6 +24,7 @@ Build the plugin:
 ```
 
 ## Example Plugin Instructions
+<<<<<<< HEAD
 
 These notes can be found in the file where users define their plugins (for each language)
 
@@ -60,3 +61,35 @@ used to modulate the waveform over time.
 
 - weird thing where when the js template runs for a minute or two it becomes glitched in a random looking way and cpu usage drops to zero, but calls to extism guest funcs is still reporting success codes...
 - Implement more complex, varied wave types
+=======
+
+These notes can be found in the file where users define their plugins (for each language)
+
+```
+A simple example of saw wave generator plugin
+
+Phase represents the percentage progress that the wave has made through the wavelength
+ 10
+   |\    |\    |\    @\    @
+   | \   | \   | \   | \   |
+ --|--@--|--@--|--\--|--\--|--
+   |   \ |   \ |   \ |   \ |
+   |    \|    \|    \|    \|
+-10   ▲     ▲        ▲     ▲
+      │     │        │     │
+     0.5   0.5      0.0   0.0
+              PHASE
+
+Inputs 1, 2, and 3 are the current values (-10 to 10) of 3 "Low Frequency Oscillators",
+sine waves that can be used to change certain factors over time. for example, amplitude.
+Changing the amplitude would make the wave louder and quieter over time. Think of it like
+automatically turning the volume knob up and down according to a slow sine wave.
+
+"Modulation" is the word typically used to describe these sorts of procedural changes
+
+the frequency is taken care of for you, but is is also provided here in hertz if you would
+like the synth behvior to change (modulate) according the frequency it is generating
+
+The fourth input increases from -10.0 to 10.0 over the course of every 16 bars, this can be
+used to modulate the waveform over time.
+```
