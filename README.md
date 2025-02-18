@@ -55,8 +55,3 @@ like the synth behvior to change (modulate) according the frequency it is genera
 The fourth input increases from -10.0 to 10.0 over the course of every 16 bars, this can be
 used to modulate the waveform over time.
 ```
-
-## TODO
-
-- weird thing where when the js template runs for a minute or two it becomes glitched in a random looking way and cpu usage drops to zero, but calls to extism guest funcs is still reporting success codes...
-- Implement more complex, varied wave types
