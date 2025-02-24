@@ -29,4 +29,4 @@ echo "\nInstall Module to User VCV Folder";
 
 # Install to dev location
 echo "\nInstall Module to User VCV Folder";
-(cd vcv_module && ./dev_build_and_install)
+(cd vcv_module && ./dev_build_and_install.sh)

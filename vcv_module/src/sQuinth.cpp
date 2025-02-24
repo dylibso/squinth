@@ -26,13 +26,13 @@ struct sQuinth : Module {
 
 	sQuinth() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configInput(PITCH_INPUT, "");
-		configInput(I1_INPUT, "");
-		configInput(I2_INPUT, "");
-		configInput(I3_INPUT, "");
-		configInput(I4_INPUT, "");
-		configOutput(OUT_L_OUTPUT, "");
-		configOutput(OUT_R_OUTPUT, "");
+		configInput(PITCH_INPUT, "V/OCT");
+		configInput(I1_INPUT, "Mod 1");
+		configInput(I2_INPUT, "Mod 2");
+		configInput(I3_INPUT, "Mod 3");
+		configInput(I4_INPUT, "Mod 4");
+		configOutput(OUT_L_OUTPUT, "Left");
+		configOutput(OUT_R_OUTPUT, "Right");
 	}
 
 	std::string man_str = "";
