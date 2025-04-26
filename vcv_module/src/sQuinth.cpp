@@ -26,13 +26,13 @@ struct sQuinth : Module {
 
 	sQuinth() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configInput(PITCH_INPUT, "");
-		configInput(I1_INPUT, "");
-		configInput(I2_INPUT, "");
-		configInput(I3_INPUT, "");
-		configInput(I4_INPUT, "");
-		configOutput(OUT_L_OUTPUT, "");
-		configOutput(OUT_R_OUTPUT, "");
+		configInput(PITCH_INPUT, "V/OCT");
+		configInput(I1_INPUT, "Mod 1");
+		configInput(I2_INPUT, "Mod 2");
+		configInput(I3_INPUT, "Mod 3");
+		configInput(I4_INPUT, "Mod 4");
+		configOutput(OUT_L_OUTPUT, "Left");
+		configOutput(OUT_R_OUTPUT, "Right");
 	}
 
 	std::string man_str = "";
@@ -116,7 +116,9 @@ struct sQuinth : Module {
 				wasm_inputs,
 				cachesize,
 				phase,
-				false
+				false,
+        args.frame,
+        args.sampleRate
 			);
 
 			if (output_buf == nullptr) {
@@ -126,24 +128,30 @@ struct sQuinth : Module {
 
 			memcpy(right_output_buf, output_buf, cachesize * sizeof(float));
 
-			output_buf = ComputeAudioSamplesMonophonic(
-				plugin, 
-				args.sampleTime,
-				freq_hz,
-				wasm_inputs,
-				cachesize,
-				phase,
-				true
-			);
-
+			if (outputs[OUT_R_OUTPUT].isConnected()) {
+        output_buf = ComputeAudioSamplesMonophonic(
+				  plugin, 
+				  args.sampleTime,
+				  freq_hz,
+				  wasm_inputs,
+				  cachesize,
+				  phase,
+				  true,
+          args.frame,
+          args.sampleRate
+			  );
+      } 
+      
 			// update the current phase
 			phase = ComputePhaseAfterNumSamples(cachesize, phase, args.sampleRate, freq_hz);
 		}
 		
 		if (output_buf != nullptr) {
 			outputs[OUT_L_OUTPUT].setVoltage(output_buf[args.frame % cachesize]);
-			outputs[OUT_R_OUTPUT].setVoltage(right_output_buf[args.frame % cachesize]);
-		}
+			if (outputs[OUT_R_OUTPUT].isConnected()) {
+        outputs[OUT_R_OUTPUT].setVoltage(right_output_buf[args.frame % cachesize]);
+		  }
+    }
 
 		return;
 	}

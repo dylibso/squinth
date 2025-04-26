@@ -23,3 +23,5 @@ vcv_module/res/*.wasm
 OLD/
 
 !templates/*/*_bundle/**
+
+.clangd
