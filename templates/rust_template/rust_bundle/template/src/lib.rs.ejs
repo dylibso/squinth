@@ -41,12 +41,12 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
         //    currently works and the way I would ideally like to pass things around in rust. Specifically
         //    the user defined function does not have a way to accept a reference rather than a copy in a templated way
         let wave_args: types::WaveArgs = types::WaveArgs {
-            freq_hz: freq_hz,
+            freq_hz,
             inputs: vec![input_one, input_two, input_three, input_four],
             phase: (curr_phase + (freq_hz * sample_time * sample_no as f32)).fract(),
-            is_left_channel:is_left_channel,
-            sample,
-            sample_rate
+            is_left_channel,
+            sample: (sample + sample_no as i64),
+            sample_rate,
         };
 
         // Computes the value of this individual sample and puts it where it belongs in the output buffer
