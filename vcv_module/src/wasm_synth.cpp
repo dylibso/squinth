@@ -53,7 +53,9 @@ float* ComputeAudioSamplesMonophonic(
     float inputs[4],
     int32_t num_samples, // TODO: only 256 is supported due to coordination with plugin modules
     float curr_phase, // If you do not set this, the wavelen will start from beginning at the end of each period
-    bool is_left_channel
+    bool is_left_channel,
+    int64_t sample,
+    float sample_rate
 ){
     if (plugin == NULL){
         DEBUG("ERROR: NULL PLUGIN\n");
@@ -74,7 +76,9 @@ float* ComputeAudioSamplesMonophonic(
         inputs ? inputs[1] : 1.0f,
         inputs ? inputs[2] : 1.0f,
         inputs ? inputs[3] : 1.0f,
-        is_left_channel ? 1 : 0
+        is_left_channel ? 1 : 0,
+        sample,
+        sample_rate
     };
 
     int rc = extism_plugin_call(plugin, "batch_compute_wf", (const uint8_t*)&args, sizeof(ExtismArgs));

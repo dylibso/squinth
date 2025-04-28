@@ -82,20 +82,27 @@ def batch_compute_wf():
   inputFour:float  = input_args[7]
 
   isLeftChannel:bool = integer_input_args[8] > 0
-  
+ 
+  sample = array('q', input[4*9:4*11])[0]
+  sample_rate = input_args[11]
+
   floatbuf:list = list([0.0] * numSamples)
 
   args: WaveArgs = WaveArgs(
     freq_hz=freqHz,
     inputs=[inputOne, inputTwo, inputThree, inputFour],
     phase=currPhase,
-    isLeftChannel=isLeftChannel
+    isLeftChannel=isLeftChannel,
+    sample=sample,
+    sampleRate=sample_rate
   );
 
   for sampleNo in range(0, numSamples):
     args.phase = (currPhase + args.freq_hz * sampleTime * sampleNo) % 1.0
+    args.sample += 1
     floatbuf[sampleNo] = plugin.wave(args)
 
   extism.output( array('f', floatbuf).tobytes() )
 
   return 0;
+

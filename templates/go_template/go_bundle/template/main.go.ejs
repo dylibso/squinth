@@ -25,13 +25,18 @@ func BatchComputeWf() (int32, error) {
 	var inputThree float32 = params[6]
 	var inputFour float32  = params[7]
 
-    var isLeftChannel bool = *(*int32)(unsafe.Pointer(&input[8*4])) > 0
+  var isLeftChannel bool = *(*int32)(unsafe.Pointer(&input[8*4])) > 0
+
+  var sample = *(*int64)(unsafe.Pointer(&input[9*4]))
+  var sampleRate = params[11]
 
 	var args WaveArgs = WaveArgs{
 		FreqHz:        freqHz,
 		Inputs:        []float32{inputOne, inputTwo, inputThree, inputFour},
 		Phase:         currPhase,
 		IsLeftChannel: isLeftChannel,
+    Sample:        sample,
+    SampleRate:    sampleRate,
 	}
 
 	outBuf := make([]float32, numSamples)
@@ -39,7 +44,8 @@ func BatchComputeWf() (int32, error) {
 	//pdk.Log(pdk.LogError, "goop")
 	for sampleNo := 0; sampleNo < len(outBuf); sampleNo++ {
 		args.Phase = float32(math.Mod(float64(currPhase+(args.FreqHz*sampleTime*float32(sampleNo))), 1.0))
-		outBuf[sampleNo], _ = Wave(args)
+		args.Sample = args.Sample + 1
+    outBuf[sampleNo], _ = Wave(args)
 	}
 
 	pdk.Output(unsafe.Slice((*byte)(unsafe.Pointer(&outBuf[0])), len(outBuf)*4))

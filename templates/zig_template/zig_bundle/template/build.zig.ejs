@@ -8,7 +8,7 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{
         .default_target = .{ .abi = .musl, .os_tag = BUILD_TARGET_OS, .cpu_arch = .wasm32 },
     });
-    const pdk_module = b.dependency("extism-pdk", .{ .target = target, .optimize = optimize }).module("extism-pdk");
+    const pdk_module = b.dependency("extism_pdk", .{ .target = target, .optimize = optimize }).module("extism_pdk");
     <% if(JSON.stringify(schema).includes("date-time")) { -%>
     const datetime_module = b.dependency("datetime", .{ .target = target, .optimize = optimize }).module("datetime");
     <% } -%>
@@ -27,6 +27,6 @@ pub fn build(b: *std.Build) !void {
     <% if(JSON.stringify(schema).includes("date-time")) { -%>
     plugin.root_module.addImport("datetime", datetime_module);
     <% } -%>
-    plugin.root_module.addImport("extism-pdk", pdk_module);
+    plugin.root_module.addImport("extism_pdk", pdk_module);
     b.installArtifact(plugin);
 }
