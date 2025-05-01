@@ -3,11 +3,19 @@
 package main
 
 import (
+	"math"
 	"math/rand/v2"
 	"unsafe"
 
 	pdk "github.com/extism/go-pdk"
 )
+
+func MaxInt(numOne int32, numTwo int32) int32 {
+	if numOne > numTwo {
+		return numOne
+	}
+	return numTwo
+}
 
 func BatchComputeWf() (int32, error) {
 	// BatchComputeWF processes the input buffer and outputs the user-defined wave
@@ -17,7 +25,7 @@ func BatchComputeWf() (int32, error) {
 	// 	return -1, errors.New(fmt.Sprintf("Improper Input Size, %d", len(input)))
 	// }
 
-	// var params []float32 = unsafe.Slice((*float32)(unsafe.Pointer(&input[0])), len(input)/4)
+	var params []float32 = unsafe.Slice((*float32)(unsafe.Pointer(&input[0])), len(input)/4)
 
 	// var sampleTime float32 = params[0]
 	// var freqHz float32 = params[1]
@@ -25,7 +33,7 @@ func BatchComputeWf() (int32, error) {
 
 	var numSamples uint32 = uint32(*(*int32)(unsafe.Pointer(&input[3*4])))
 
-	// var inputOne float32 = params[4]
+	var inputOne float32 = params[4]
 	// var inputTwo float32 = params[5]
 	// var inputThree float32 = params[6]
 	// var inputFour float32 = params[7]
@@ -46,13 +54,14 @@ func BatchComputeWf() (int32, error) {
 
 	outBuf := make([]float32, numSamples)
 
-	noise_vals := make([]float32, 6)
+	num_noise_vals := MaxInt(int32(inputOne)+10, 1) // ensure >= 1
+	noise_vals := make([]float32, num_noise_vals)
 
 	// pdk.Log(pdk.LogError, "goop")
 	for sampleNo := 0; sampleNo < len(outBuf); sampleNo++ {
 		outBuf[sampleNo] = 0.0
 		for noise_index := 0; noise_index < len(noise_vals); noise_index++ {
-			if (sampleNo % (noise_index + 1)) == 0 {
+			if (sampleNo % int(math.Exp2(0.45*float64(noise_index)))) == 0 {
 				noise_vals[noise_index] = (rand.Float32() * 20.0) - 10.0 // generate new noise sample
 			}
 			outBuf[sampleNo] += noise_vals[noise_index]
