@@ -10,6 +10,10 @@ import (
 	pdk "github.com/extism/go-pdk"
 )
 
+func LogBase(value, base float64) float64 {
+	return math.Log(value) / math.Log(base)
+}
+
 func MaxInt(numOne int32, numTwo int32) int32 {
 	if numOne > numTwo {
 		return numOne
@@ -56,12 +60,14 @@ func BatchComputeWf() (int32, error) {
 
 	num_noise_vals := MaxInt(int32(inputOne)+10, 1) // ensure >= 1
 	noise_vals := make([]float32, num_noise_vals)
+	// determine the exponent coefficient based on the number of voices
+	exp_coef := 1.0 / LogBase(math.Pow(2.0, float64(num_noise_vals)), 512)
 
 	// pdk.Log(pdk.LogError, "goop")
 	for sampleNo := 0; sampleNo < len(outBuf); sampleNo++ {
 		outBuf[sampleNo] = 0.0
 		for noise_index := 0; noise_index < len(noise_vals); noise_index++ {
-			if (sampleNo % int(math.Exp2(0.45*float64(noise_index)))) == 0 {
+			if (sampleNo % int(math.Exp2(exp_coef*float64(noise_index)))) == 0 {
 				noise_vals[noise_index] = (rand.Float32() * 20.0) - 10.0 // generate new noise sample
 			}
 			outBuf[sampleNo] += noise_vals[noise_index]
