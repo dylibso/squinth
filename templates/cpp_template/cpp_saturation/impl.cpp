@@ -40,7 +40,7 @@ std::expected<float, pdk::Error> impl::wave(pdk::WaveArgs &&input) {
   const float diode_current =
       scale_current * (std::pow(e, diode_voltage / (ifact * tvolt)) - 1.0);
 
-  const float mix_factor = input.inputs[1] + 10 * (1.0 / 20.0);
+  const float mix_factor = (input.inputs[1] + 10.0) * (1.0 / 20.0);
 
-  return ((1.0 - mix_factor) * itpl_wv + diode_current * mix_factor) * 10.0;
+  return (((1.0 - mix_factor) * itpl_wv) + (diode_current * mix_factor)) * 10.0;
 }
