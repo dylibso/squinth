@@ -25,3 +25,4 @@ OLD/
 !templates/*/*_bundle/**
 
 .clangd
+wasi-sdk/

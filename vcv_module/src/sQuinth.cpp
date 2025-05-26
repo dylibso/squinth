@@ -106,8 +106,6 @@ struct sQuinth : Module {
           inputs[I4_INPUT].isConnected() ? (float)inputs[I4_INPUT].getVoltage()
                                          : 0.0f};
 
-      DEBUG("input zero: %f", wasm_inputs[0]);
-
       // compute the right channel's audio samples
       output_buf = ComputeAudioSamplesMonophonic(
           plugin, args.sampleTime, freq_hz, wasm_inputs, cachesize, phase,
