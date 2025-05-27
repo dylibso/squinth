@@ -41,9 +41,15 @@ pub fn pitch_shift(freq_hz: f32, amt: f32) -> f32 {
     freq_hz * f32::powf(2.0, amt)
 }
 
-// shift a freq up or down a certain number of perfect fifths
-pub fn perfect_fifth(freq_hz: f32, steps: i32) -> f32 {
-    freq_hz * f32::powf(2.0, 0.5 * (steps as f32))
+// shift a freq up or down by fifths and octaves
+pub fn fifths_and_octaves(freq_hz: f32, steps: i32) -> f32 {
+    // shift up 1 octave for every two steps
+    let new_freq: f32 = pitch_shift(freq_hz, (steps / 2) as f32); // integer division will automatically floor
+    if steps % 2 == 1 {
+        new_freq * 1.5 // add perfect fifth on top of octave scaling
+    } else {
+        new_freq
+    }
 }
 
 // User-defined function that computes a single sample of a waveform
@@ -78,7 +84,7 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
                 //  unlike modulus, remainder can return negative values
                 //  -5 % 3 == -2 && -5 % -3 == -2 && 5 % -3 == 2 && 5 % 3 == 2
 
-                perfect_fifth(_input.freq_hz, step_delta % 6)
+                fifths_and_octaves(_input.freq_hz, step_delta % 6)
             }
         };
 
