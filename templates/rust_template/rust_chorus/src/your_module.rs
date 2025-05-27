@@ -58,8 +58,12 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
     let num_voices: usize = (_input.inputs[0] + 11.0) as usize;
     let mut amplitude: f32 = 0.0;
     for voice in 0..num_voices {
-        let detune_input = (_input.inputs[1] + 10.0) * (1.0 / 20.0);
-        let alt_mode: bool = detune_input > 0.98;
+        let mut detune_input = (_input.inputs[1] + 10.0) * (2.0 / 20.0);
+        let alt_mode: bool = detune_input > 1.0;
+        // slightly change detune input for stereo wideness
+        if _input.is_left_channel {
+            detune_input += 0.02;
+        }
 
         let detune_freq: f32 = if voice == 0 {
             _input.freq_hz
@@ -76,7 +80,7 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
                 // ok so the bigger steps actually equate to less offset, but thats just aesthetic
                 pitch_shift(_input.freq_hz, detune_input / step_delta as f32)
             } else {
-                // offset by perfect fifths, but don't go higher than 3 octaves
+                // offset by perfect fifths, but don't go higher than 2 octaves
                 //
                 // wow, so rust's "%" operation is technically a "remainder" operation
                 //  rather than a modulus like in other languages. The only time this
@@ -84,15 +88,24 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
                 //  unlike modulus, remainder can return negative values
                 //  -5 % 3 == -2 && -5 % -3 == -2 && 5 % -3 == 2 && 5 % 3 == 2
 
-                fifths_and_octaves(_input.freq_hz, step_delta % 6)
+                // move up the freq ladder by steps and octaves, then detune by the detune amount
+                // modified by the voice id for uniqueness (id cannot be 0 because we captured this
+                // condition)
+                pitch_shift(
+                    fifths_and_octaves(_input.freq_hz, step_delta % 4),
+                    (detune_input - 1.0) / voice as f32,
+                )
             }
         };
+
+        // add different amounts of phase offset in order to increase stereo separation
+        let stereo_delta: f32 = if _input.is_left_channel { 0.05 } else { 0.13 };
 
         amplitude += comp_amp(
             detune_freq,
             _input.sample,
             _input.sample_rate,
-            (voice as f32) * 0.05,
+            (voice as f32) * stereo_delta, // offest the phase of each voice a bit
         );
     }
 
