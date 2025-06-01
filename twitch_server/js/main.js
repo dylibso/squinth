@@ -11,7 +11,7 @@ get_wasm_by_plugin_name
 
 // Set up express server
 const app = express();
-const PORT = 5309;
+const PORT = 5310;
 const XTP_TOKEN = process.env.XTP_TOKEN.trim();
 const XTP_EXTENSION_ID = process.env.XTP_EXTENSION_ID.trim();
 

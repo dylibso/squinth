@@ -75,9 +75,9 @@ struct sQuinth : Module {
     // number, else on clock trigger check
     // TODO: temporarily disabling while testing modules
     // if (args.frame % 80000 == 0) {
-    // 	DEBUG("Pinging the twitch worker at localhost:5309");
+    // 	DEBUG("Pinging the twitch worker at localhost:5310");
     // 	// if this fails the currently loaded plugin will be kept
-    // 	load_wasm("http://0.0.0.0:5309/module-queue", true);
+    // 	load_wasm("http://0.0.0.0:5310/module-queue", true);
     // }
 
     // exit early if the plugin has not been set
@@ -178,7 +178,7 @@ struct WasmURLItem : MenuItem {
 
   void onAction(const event::Action &e) override {
     // TODO: test path
-    module->load_wasm("http://0.0.0.0:5309/module-queue", true);
+    module->load_wasm("http://0.0.0.0:5310/module-queue", true);
   }
 };
 
