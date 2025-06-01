@@ -195,8 +195,8 @@ func fakeTwitchWorker(
 
 // 	})
 
-// 	fmt.Println("Server is running at 0.0.0.0:5309")
-// 	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
+// 	fmt.Println("Server is running at 0.0.0.0:5310")
+// 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 // }
 
 func wasmModServerWorker(modQueue chan []byte) {
@@ -220,8 +220,8 @@ func wasmModServerWorker(modQueue chan []byte) {
 		}
 	})
 
-	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5309")
-	log.Fatal(http.ListenAndServe("0.0.0.0:5309", nil))
+	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
+	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 }
 
 func main() {
