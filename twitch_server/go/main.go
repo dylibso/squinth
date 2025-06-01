@@ -70,11 +70,11 @@ func twitchWorker(
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println("Received message:", message.Message)
-		if strings.TrimSpace(message.Message)[0] == '!' {
+		if strings.TrimSpace(message.Message)[0] == '#' {
 			plugin_name := strings.TrimSpace(message.Message[1:])
 
 			if strings.Contains(plugin_name, " ") {
-				client.Reply(message.Channel, message.ID, "Send a message that follows the format \"!<plugin_name>\"")
+				client.Reply(message.Channel, message.ID, "To load a new plugin, send a message that follows the format \"#<plugin_name>\"")
 				return
 			}
 
