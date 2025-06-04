@@ -18,8 +18,8 @@ func pluginListWorker(
 	xtpExtension string,
 	xtpToken string,
 	pluginListUpdates chan map[string]xtpBindingInfo,
-	updateRate uint) {
-
+	updateRate uint,
+) {
 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
 	if err != nil {
 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
@@ -43,7 +43,6 @@ func pluginListWorker(
 			}
 		}
 	}
-
 }
 
 // TODO: update for the kind of commands that twitch users will send
@@ -95,6 +94,7 @@ func twitchWorker(
 						plugin_name, strings.Join(maps.Keys(plugin_list), "\n"),
 					),
 				)
+				return
 			}
 
 			wasmFile, err := getWasmFile(pluginInfo.ContentAddress, xtpToken)
@@ -136,7 +136,6 @@ func fakeTwitchWorker(
 	xtpExtension string,
 	xtpToken string,
 ) {
-
 	// Every 5 seconds fetch the same plugin and add it to the queue to simulate twitch user activity
 	for {
 		time.Sleep(time.Second * 5)

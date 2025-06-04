@@ -12,7 +12,7 @@ const FLOAT32_BYTES: usize = 4;
 pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
     let sample_time: f32 = f32::from_le_bytes(input[0..4].try_into().unwrap());
     let freq_hz: f32 = f32::from_le_bytes(input[4..8].try_into().unwrap());
-    let mut curr_phase: f32 = f32::from_le_bytes(input[8..12].try_into().unwrap());
+    let curr_phase: f32 = f32::from_le_bytes(input[8..12].try_into().unwrap());
 
     let num_samples: i32 = i32::from_le_bytes(input[12..16].try_into().unwrap());
 
@@ -26,7 +26,6 @@ pub fn batch_compute_wf(input: Vec<u8>) -> FnResult<Vec<u8>> {
     if num_samples < 1 {
         // Return unchanging nonzero output, 1024 samples is more than the host would usually ask for
         return Ok(vec![0u8; 1024 * FLOAT32_BYTES]);
-    } else {
     }
 
     let usize_num_samples: usize = num_samples.try_into().unwrap();
