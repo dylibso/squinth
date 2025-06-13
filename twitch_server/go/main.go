@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -14,41 +13,40 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func pluginListWorker(
-	xtpExtension string,
-	xtpToken string,
-	pluginListUpdates chan map[string]xtpBindingInfo,
-	updateRate uint,
-) {
-	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-	if err != nil {
-		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
-	}
-
-	for {
-		time.Sleep(time.Duration(updateRate) * time.Second)
-
-		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-		if err != nil {
-			fmt.Println("Failed to complete retrieval of plugin list: ", err)
-		}
-
-		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
-			// set the new plugin list and send the update over the channel
-			plugin_list = new_plugin_list
-			pluginListUpdates <- plugin_list
-			fmt.Println("----- AVAILABLE PLUGINS -----")
-			for plugin_name := range maps.Keys(plugin_list) {
-				fmt.Println("- ", plugin_name)
-			}
-		}
-	}
-}
+// func pluginListWorker(
+// 	xtpExtension string,
+// 	xtpToken string,
+// 	pluginListUpdates chan map[string]xtpBindingInfo,
+// 	updateRate uint,
+// ) {
+// 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+// 	if err != nil {
+// 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+// 	}
+//
+// 	for {
+// 		time.Sleep(time.Duration(updateRate) * time.Second)
+//
+// 		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+// 		if err != nil {
+// 			fmt.Println("Failed to complete retrieval of plugin list: ", err)
+// 		}
+//
+// 		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
+// 			// set the new plugin list and send the update over the channel
+// 			plugin_list = new_plugin_list
+// 			pluginListUpdates <- plugin_list
+// 			fmt.Println("----- AVAILABLE PLUGINS -----")
+// 			for plugin_name := range maps.Keys(plugin_list) {
+// 				fmt.Println("- ", plugin_name)
+// 			}
+// 		}
+// 	}
+// }
 
 // TODO: update for the kind of commands that twitch users will send
 func twitchWorker(
 	moduleQueue chan []byte,
-	pluginListUpdates chan map[string]xtpBindingInfo,
 	xtpExtension string,
 	xtpToken string,
 ) {
@@ -61,11 +59,17 @@ func twitchWorker(
 	// TODO: another thread that sends to a channel that updates this list periodically?
 	//		will there be any issue with regular requests? ie blocked for suspicious traffic
 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+	initialListMsg := fmt.Sprintf("Please try one of the commands below:\n\n#%s",
+		strings.Join(maps.Keys(plugin_list), "\n#"))
 	if err != nil {
 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+	} else {
+		fmt.Println(initialListMsg)
 	}
 
 	client := twitch.NewClient("dpmason", oauth)
+
+	client.Say("dpmason", initialListMsg)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println("Received message:", message.Message)
@@ -77,22 +81,15 @@ func twitchWorker(
 				return
 			}
 
-			select {
-			case new_list := <-pluginListUpdates:
-				plugin_list = new_list
-				fmt.Println("Updated List")
-			default:
-			}
-
 			pluginInfo, exists := plugin_list[plugin_name]
 
 			if !exists {
+				responseString := fmt.Sprintf("Plugin >%s< was not found int the plugin list. Please try one of these commands:\n#%s",
+					plugin_name, strings.Join(maps.Keys(plugin_list), "\n#"))
 				client.Reply(
 					message.Channel,
 					message.ID,
-					fmt.Sprintf("Plugin >%s< was not found int the plugin list. Please try one of these plugins:\n%s",
-						plugin_name, strings.Join(maps.Keys(plugin_list), "\n"),
-					),
+					responseString,
 				)
 				return
 			}
@@ -233,13 +230,11 @@ func main() {
 	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
 	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
 
-	// queue of syth modules
+	// queue of synth modules
 	moduleQueue := make(chan []byte, 16)
-	pluginListUpdates := make(chan map[string]xtpBindingInfo, 1)
 
 	// go fakeTwitchWorker(moduleQueue, "zig_template")
-	go pluginListWorker(xtp_extension, xtp_token, pluginListUpdates, 5)
-	go twitchWorker(moduleQueue, pluginListUpdates, xtp_extension, xtp_token)
+	go twitchWorker(moduleQueue, xtp_extension, xtp_token)
 	go wasmModServerWorker(moduleQueue)
 
 	select {}
