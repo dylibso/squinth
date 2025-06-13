@@ -60,11 +60,11 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
     for voice in 0..num_voices {
         let detune_input = (_input.inputs[1] + 10.0) * (2.0 / 20.0);
         let alt_mode: bool = detune_input > 1.0;
-        let mut detune_mult: f32 = if _input.is_left_channel && num_voices > 1 {
+        let detune_mult: f32 = if _input.is_left_channel && num_voices > 1 {
             // slightly change detune input for stereo wideness
-            0.012
+            0.082
         } else {
-            0.01
+            0.08
         };
 
         let detune_freq: f32 = if voice == 0 {
@@ -97,14 +97,18 @@ pub(crate) fn wave(_input: types::WaveArgs) -> Result<f32, Error> {
                 // modified by the voice id for uniqueness (id cannot be 0 because we captured this
                 // condition)
                 pitch_shift(
-                    fifths_and_octaves(_input.freq_hz, step_delta % 4),
+                    fifths_and_octaves(_input.freq_hz, step_delta % 3),
                     ((detune_input - 1.0) / voice as f32) * detune_mult,
                 )
             }
         };
 
         // add different amounts of phase offset in order to increase stereo separation
-        let stereo_delta: f32 = if _input.is_left_channel { 0.05 } else { 0.13 };
+        let stereo_delta: f32 = if _input.is_left_channel {
+            0.0577
+        } else {
+            0.1357
+        };
 
         amplitude += comp_amp(
             detune_freq,
