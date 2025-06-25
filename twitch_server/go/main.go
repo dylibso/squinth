@@ -1,6 +1,7 @@
 package main
 
 import (
+  "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -47,6 +48,7 @@ import (
 // TODO: update for the kind of commands that twitch users will send
 func twitchWorker(
 	moduleQueue chan []byte,
+  nameQueue chan string,
 	xtpExtension string,
 	xtpToken string,
 ) {
@@ -108,6 +110,7 @@ func twitchWorker(
 				client.Reply(message.Channel, message.ID, "The queue is full, blocking until another module is consumed")
 			}
 			moduleQueue <- wasmFile
+      nameQueue <- plugin_name
 			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin_name))
 		}
 	})
@@ -195,7 +198,7 @@ func fakeTwitchWorker(
 // 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 // }
 
-func wasmModServerWorker(modQueue chan []byte) {
+func wasmModServerWorker(modQueue chan []byte, nameQueue chan string) {
 	// TODO: Endpoint that will return the NAME of most recently transferred module
 	//   not yet sure how to keep track of that yet in way that doesn't require me to keep 2 lists
 	//   in sync
@@ -215,8 +218,34 @@ func wasmModServerWorker(modQueue chan []byte) {
 			return
 		}
 	})
+	
+  http.HandleFunc("/name-queue", func(respWriter http.ResponseWriter, req *http.Request) {
+    // check the name queue for the name of the module and set that as a header if you have one
+    data := make(map[string]string)
+    
+    select {
+    case modName := <-nameQueue:
+      data["name"] = modName
+    default:
+      data["name"] = "user_module"
+    }
+    // Convert the data structure to JSON
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			http.Error(respWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
+		// Set the content type to application/json
+		respWriter.Header().Set("Content-Type", "application/json")
+
+		// Write the JSON data to the response
+		respWriter.Write(jsonData)
+    
+    return
+  })
+	
+  fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 }
 
@@ -232,10 +261,9 @@ func main() {
 
 	// queue of synth modules
 	moduleQueue := make(chan []byte, 16)
-
-	// go fakeTwitchWorker(moduleQueue, "zig_template")
-	go twitchWorker(moduleQueue, xtp_extension, xtp_token)
-	go wasmModServerWorker(moduleQueue)
+  nameQueue := make(chan string, 16)
+	go twitchWorker(moduleQueue, nameQueue, xtp_extension, xtp_token)
+	go wasmModServerWorker(moduleQueue, nameQueue)
 
 	select {}
 }
