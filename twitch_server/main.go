@@ -1,7 +1,7 @@
 package main
 
 import (
-  "encoding/json"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -48,14 +48,11 @@ import (
 // TODO: update for the kind of commands that twitch users will send
 func twitchWorker(
 	moduleQueue chan []byte,
-  nameQueue chan string,
+	nameQueue chan string,
 	xtpExtension string,
 	xtpToken string,
 ) {
-	// or client := twitch.NewAnonymousClient() for an anonymous user (no write capabilities)
-	// user_id := strings.TrimSpace(os.Getenv("TWITCH_USER_ID"))
 	oauth := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
-
 	channel := strings.TrimSpace(os.Getenv("CHANNEL"))
 
 	// TODO: another thread that sends to a channel that updates this list periodically?
@@ -69,9 +66,9 @@ func twitchWorker(
 		fmt.Println(initialListMsg)
 	}
 
-	client := twitch.NewClient("dpmason", oauth)
+	client := twitch.NewClient(channel, oauth)
 
-	client.Say("dpmason", initialListMsg)
+	client.Say(channel, initialListMsg)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println("Received message:", message.Message)
@@ -110,7 +107,7 @@ func twitchWorker(
 				client.Reply(message.Channel, message.ID, "The queue is full, blocking until another module is consumed")
 			}
 			moduleQueue <- wasmFile
-      nameQueue <- plugin_name
+			nameQueue <- plugin_name
 			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin_name))
 		}
 	})
@@ -163,47 +160,7 @@ func fakeTwitchWorker(
 	}
 }
 
-// func jsonServerWorker(chatUpdates chan string) {
-// 	http.HandleFunc("/twitch-queue", func(respWriter http.ResponseWriter, req *http.Request) {
-// 		data := make(map[string]string)
-
-// 		// loop until all messages have been flushed, then respond with the json data
-// 		for {
-// 			select {
-// 			case msg := <-chatUpdates:
-// 				fmt.Println("Flushed message: ", msg)
-// 				cmdParts := strings.Split(msg, " ")
-// 				data[cmdParts[0]] = cmdParts[1]
-// 			default:
-// 				// No more messages in the channel
-// 				// Convert the data structure to JSON
-// 				jsonData, err := json.Marshal(data)
-// 				if err != nil {
-// 					http.Error(respWriter, err.Error(), http.StatusInternalServerError)
-// 					return
-// 				}
-
-// 				// Set the content type to application/json
-// 				respWriter.Header().Set("Content-Type", "application/json")
-
-// 				// Write the JSON data to the response
-// 				respWriter.Write(jsonData)
-// 				return
-// 			}
-// 		}
-
-// 	})
-
-// 	fmt.Println("Server is running at 0.0.0.0:5310")
-// 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
-// }
-
 func wasmModServerWorker(modQueue chan []byte, nameQueue chan string) {
-	// TODO: Endpoint that will return the NAME of most recently transferred module
-	//   not yet sure how to keep track of that yet in way that doesn't require me to keep 2 lists
-	//   in sync
-	//   This will be used to update the label that is displayed on the vcv module
-
 	http.HandleFunc("/module-queue", func(respWriter http.ResponseWriter, req *http.Request) {
 		fmt.Println("Request For Wasm Module Received")
 		select {
@@ -218,18 +175,18 @@ func wasmModServerWorker(modQueue chan []byte, nameQueue chan string) {
 			return
 		}
 	})
-	
-  http.HandleFunc("/name-queue", func(respWriter http.ResponseWriter, req *http.Request) {
-    // check the name queue for the name of the module and set that as a header if you have one
-    data := make(map[string]string)
-    
-    select {
-    case modName := <-nameQueue:
-      data["name"] = modName
-    default:
-      data["name"] = "user_module"
-    }
-    // Convert the data structure to JSON
+
+	http.HandleFunc("/name-queue", func(respWriter http.ResponseWriter, req *http.Request) {
+		// check the name queue for the name of the module and set that as a header if you have one
+		data := make(map[string]string)
+
+		select {
+		case modName := <-nameQueue:
+			data["name"] = modName
+		default:
+			data["name"] = "user_module"
+		}
+		// Convert the data structure to JSON
 		jsonData, err := json.Marshal(data)
 		if err != nil {
 			http.Error(respWriter, err.Error(), http.StatusInternalServerError)
@@ -241,11 +198,11 @@ func wasmModServerWorker(modQueue chan []byte, nameQueue chan string) {
 
 		// Write the JSON data to the response
 		respWriter.Write(jsonData)
-    
-    return
-  })
-	
-  fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
+
+		return
+	})
+
+	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 }
 
@@ -260,8 +217,9 @@ func main() {
 	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
 
 	// queue of synth modules
+	// Two queues is not ideal and can be avoided, but keeps things simple for now
 	moduleQueue := make(chan []byte, 16)
-  nameQueue := make(chan string, 16)
+	nameQueue := make(chan string, 16)
 	go twitchWorker(moduleQueue, nameQueue, xtp_extension, xtp_token)
 	go wasmModServerWorker(moduleQueue, nameQueue)
 
