@@ -1,11 +1,11 @@
 package main
 
 import (
+  "encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -14,42 +14,41 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func pluginListWorker(
-	xtpExtension string,
-	xtpToken string,
-	pluginListUpdates chan map[string]xtpBindingInfo,
-	updateRate uint) {
-
-	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-	if err != nil {
-		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
-	}
-
-	for {
-		time.Sleep(time.Duration(updateRate) * time.Second)
-
-		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-		if err != nil {
-			fmt.Println("Failed to complete retrieval of plugin list: ", err)
-		}
-
-		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
-			// set the new plugin list and send the update over the channel
-			plugin_list = new_plugin_list
-			pluginListUpdates <- plugin_list
-			fmt.Println("----- AVAILABLE PLUGINS -----")
-			for plugin_name := range maps.Keys(plugin_list) {
-				fmt.Println("- ", plugin_name)
-			}
-		}
-	}
-
-}
+// func pluginListWorker(
+// 	xtpExtension string,
+// 	xtpToken string,
+// 	pluginListUpdates chan map[string]xtpBindingInfo,
+// 	updateRate uint,
+// ) {
+// 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+// 	if err != nil {
+// 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+// 	}
+//
+// 	for {
+// 		time.Sleep(time.Duration(updateRate) * time.Second)
+//
+// 		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+// 		if err != nil {
+// 			fmt.Println("Failed to complete retrieval of plugin list: ", err)
+// 		}
+//
+// 		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
+// 			// set the new plugin list and send the update over the channel
+// 			plugin_list = new_plugin_list
+// 			pluginListUpdates <- plugin_list
+// 			fmt.Println("----- AVAILABLE PLUGINS -----")
+// 			for plugin_name := range maps.Keys(plugin_list) {
+// 				fmt.Println("- ", plugin_name)
+// 			}
+// 		}
+// 	}
+// }
 
 // TODO: update for the kind of commands that twitch users will send
 func twitchWorker(
 	moduleQueue chan []byte,
-	pluginListUpdates chan map[string]xtpBindingInfo,
+  nameQueue chan string,
 	xtpExtension string,
 	xtpToken string,
 ) {
@@ -62,11 +61,17 @@ func twitchWorker(
 	// TODO: another thread that sends to a channel that updates this list periodically?
 	//		will there be any issue with regular requests? ie blocked for suspicious traffic
 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
+	initialListMsg := fmt.Sprintf("Please try one of the commands below:\n\n#%s",
+		strings.Join(maps.Keys(plugin_list), "\n#"))
 	if err != nil {
 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
+	} else {
+		fmt.Println(initialListMsg)
 	}
 
 	client := twitch.NewClient("dpmason", oauth)
+
+	client.Say("dpmason", initialListMsg)
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		fmt.Println("Received message:", message.Message)
@@ -78,23 +83,17 @@ func twitchWorker(
 				return
 			}
 
-			select {
-			case new_list := <-pluginListUpdates:
-				plugin_list = new_list
-				fmt.Println("Updated List")
-			default:
-			}
-
 			pluginInfo, exists := plugin_list[plugin_name]
 
 			if !exists {
+				responseString := fmt.Sprintf("Plugin >%s< was not found int the plugin list. Please try one of these commands:\n#%s",
+					plugin_name, strings.Join(maps.Keys(plugin_list), "\n#"))
 				client.Reply(
 					message.Channel,
 					message.ID,
-					fmt.Sprintf("Plugin >%s< was not found int the plugin list. Please try one of these plugins:\n%s",
-						plugin_name, strings.Join(maps.Keys(plugin_list), "\n"),
-					),
+					responseString,
 				)
+				return
 			}
 
 			wasmFile, err := getWasmFile(pluginInfo.ContentAddress, xtpToken)
@@ -111,6 +110,7 @@ func twitchWorker(
 				client.Reply(message.Channel, message.ID, "The queue is full, blocking until another module is consumed")
 			}
 			moduleQueue <- wasmFile
+      nameQueue <- plugin_name
 			client.Reply(message.Channel, message.ID, fmt.Sprintf("Successfully enqueued: %s", plugin_name))
 		}
 	})
@@ -136,7 +136,6 @@ func fakeTwitchWorker(
 	xtpExtension string,
 	xtpToken string,
 ) {
-
 	// Every 5 seconds fetch the same plugin and add it to the queue to simulate twitch user activity
 	for {
 		time.Sleep(time.Second * 5)
@@ -199,7 +198,7 @@ func fakeTwitchWorker(
 // 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 // }
 
-func wasmModServerWorker(modQueue chan []byte) {
+func wasmModServerWorker(modQueue chan []byte, nameQueue chan string) {
 	// TODO: Endpoint that will return the NAME of most recently transferred module
 	//   not yet sure how to keep track of that yet in way that doesn't require me to keep 2 lists
 	//   in sync
@@ -219,8 +218,34 @@ func wasmModServerWorker(modQueue chan []byte) {
 			return
 		}
 	})
+	
+  http.HandleFunc("/name-queue", func(respWriter http.ResponseWriter, req *http.Request) {
+    // check the name queue for the name of the module and set that as a header if you have one
+    data := make(map[string]string)
+    
+    select {
+    case modName := <-nameQueue:
+      data["name"] = modName
+    default:
+      data["name"] = "user_module"
+    }
+    // Convert the data structure to JSON
+		jsonData, err := json.Marshal(data)
+		if err != nil {
+			http.Error(respWriter, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
+		// Set the content type to application/json
+		respWriter.Header().Set("Content-Type", "application/json")
+
+		// Write the JSON data to the response
+		respWriter.Write(jsonData)
+    
+    return
+  })
+	
+  fmt.Println("wasmModServerWorker Server is running at 0.0.0.0:5310")
 	log.Fatal(http.ListenAndServe("0.0.0.0:5310", nil))
 }
 
@@ -234,14 +259,11 @@ func main() {
 	var xtp_extension string = strings.TrimSpace(os.Getenv("XTP_EXTENSION_ID"))
 	var xtp_token string = strings.TrimSpace(os.Getenv("XTP_TOKEN"))
 
-	// queue of syth modules
+	// queue of synth modules
 	moduleQueue := make(chan []byte, 16)
-	pluginListUpdates := make(chan map[string]xtpBindingInfo, 1)
-
-	// go fakeTwitchWorker(moduleQueue, "zig_template")
-	go pluginListWorker(xtp_extension, xtp_token, pluginListUpdates, 5)
-	go twitchWorker(moduleQueue, pluginListUpdates, xtp_extension, xtp_token)
-	go wasmModServerWorker(moduleQueue)
+  nameQueue := make(chan string, 16)
+	go twitchWorker(moduleQueue, nameQueue, xtp_extension, xtp_token)
+	go wasmModServerWorker(moduleQueue, nameQueue)
 
 	select {}
 }

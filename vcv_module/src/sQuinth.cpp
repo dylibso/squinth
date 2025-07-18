@@ -2,6 +2,29 @@
 #include "plugin.hpp"
 #include <patch.hpp>
 
+char *strip_quotes(const char *str) {
+  size_t len = strlen(str);
+
+  // Check for empty string
+  if (len < 2) {
+    return NULL; // Return NULL if the string is too short
+  }
+
+  // Check if the first and last characters are quotes
+  if (str[0] == '"' && str[len - 1] == '"') {
+    // Allocate memory for new string (length - 2 for the quotes + 1 for null
+    // terminator)
+    char *result = (char *)malloc(len - 1);
+    if (result) {
+      strncpy(result, str + 1, len - 2); // Copy without quotes
+      result[len - 2] = '\0';            // Null-terminate the new string
+    }
+    return result;
+  }
+
+  return NULL; // Return NULL if the string does not start and end with quotes
+}
+
 struct sQuinth : Module {
 
   enum ParamId { PARAMS_LEN };
@@ -58,10 +81,35 @@ struct sQuinth : Module {
       return;
     }
 
-    std::string label_string =
-        path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
-    this->text_display->text = label_string.c_str();
-    DEBUG("Label String: %s", label_string.c_str());
+    if (is_url) {
+      this->text_display->text = "module";
+      try {
+        // HACKY way to get the name of the module just fetched
+        json_t *reqJ = json_object();
+        json_t *resJ = network::requestJson(network::METHOD_GET,
+                                            "0.0.0.0:5310/name-queue", reqJ);
+        const char *key;
+        json_t *value;
+        json_object_foreach(resJ, key, value) {
+          /* block of code that uses key and value */
+          const char *val = json_dumps(value, JSON_ENCODE_ANY);
+
+          this->text_display->text = strip_quotes(val);
+          DEBUG("--- key: %s - value: %s ---", key, val);
+        }
+        json_decref(reqJ);
+        json_decref(resJ);
+
+      } catch (const std::exception &e) {
+        return;
+      }
+    } else {
+      // use the file name as the module name
+      std::string label_string =
+          path.substr(path.rfind("/") + 1, path.rfind(".wasm"));
+      this->text_display->text = label_string.c_str();
+      DEBUG("Label String: %s", label_string.c_str());
+    }
 
     DEBUG("Plugin Loaded Successfully");
 
@@ -69,16 +117,13 @@ struct sQuinth : Module {
   }
 
   void process(const ProcessArgs &args) override {
-    // periodically ping the twitch worker for a new module
-    // TODO: make this work in sync with an input clock. Module loads will be
-    // in-tempo 		if clock not connected use this arbitrary
-    // number, else on clock trigger check
-    // TODO: temporarily disabling while testing modules
-    // if (args.frame % 80000 == 0) {
-    // 	DEBUG("Pinging the twitch worker at localhost:5310");
-    // 	// if this fails the currently loaded plugin will be kept
-    // 	load_wasm("http://0.0.0.0:5310/module-queue", true);
-    // }
+
+    // Periodically check the server for new modules
+    // offset is meant to hackily make sure that the bd-cnct and squinth modules
+    // do not check during the same frame, to alleviate spikes
+    if ((args.frame + 444) % int64_t(args.sampleRate) * 3 == 0) {
+      load_wasm("http://0.0.0.0:5310/module-queue", true);
+    }
 
     // exit early if the plugin has not been set
     if (plugin == nullptr) {
