@@ -81,33 +81,6 @@ func getWasmFile(contentAddress string, xtpToken string) ([]byte, error) {
 }
 
 func getWasmByPluginName(pluginName string, extensionID string, xtpToken string) ([]byte, error) {
-
-	// // check if plugin exists
-
-	// if existingList != nil {
-	// 	_, isMapContainsKey := existingList[pluginName]
-	// 	if isMapContainsKey {
-	// 		// key exists in the plugin info map
-	// 		fmt.Println("Found plugin: ", plugin_name)
-	// 	} else {
-	// 		// key does not exist
-	// 		fmt.Println(plugin_name, " was not found, fetching updated list...")
-	// 		plugin_list, err = fetchPluginList(xtp_extension, xtp_token)
-	// 		if err != nil {
-	// 			fmt.Println(err)
-	// 			return
-	// 		}
-	// 		_, isMapContainsKey := plugin_list[plugin_name]
-	// 		if !isMapContainsKey {
-	// 			client.Reply(message.Channel, message.ID,
-	// 				fmt.Sprintf("Plugin \"%s\" was not found. Please try one of these plugins:\n%s",
-	// 					plugin_name, strings.Join(maps.Keys(plugin_list), "\n")),
-	// 			)
-	// 			return
-	// 		}
-	// 	}
-	// }
-
 	url := "https://xtp.dylibso.com/api/v1/extension-points/" + extensionID + "/bindings/"
 	client := &http.Client{}
 

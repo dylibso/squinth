@@ -14,38 +14,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-// func pluginListWorker(
-// 	xtpExtension string,
-// 	xtpToken string,
-// 	pluginListUpdates chan map[string]xtpBindingInfo,
-// 	updateRate uint,
-// ) {
-// 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-// 	if err != nil {
-// 		fmt.Println("Failed to complete initial retrieval of plugin list: ", err)
-// 	}
-//
-// 	for {
-// 		time.Sleep(time.Duration(updateRate) * time.Second)
-//
-// 		new_plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
-// 		if err != nil {
-// 			fmt.Println("Failed to complete retrieval of plugin list: ", err)
-// 		}
-//
-// 		if !reflect.DeepEqual(plugin_list, new_plugin_list) {
-// 			// set the new plugin list and send the update over the channel
-// 			plugin_list = new_plugin_list
-// 			pluginListUpdates <- plugin_list
-// 			fmt.Println("----- AVAILABLE PLUGINS -----")
-// 			for plugin_name := range maps.Keys(plugin_list) {
-// 				fmt.Println("- ", plugin_name)
-// 			}
-// 		}
-// 	}
-// }
-
-// TODO: update for the kind of commands that twitch users will send
 func twitchWorker(
 	moduleQueue chan []byte,
 	nameQueue chan string,
@@ -55,8 +23,6 @@ func twitchWorker(
 	oauth := strings.TrimSpace(os.Getenv("TWITCH_OAUTH"))
 	channel := strings.TrimSpace(os.Getenv("CHANNEL"))
 
-	// TODO: another thread that sends to a channel that updates this list periodically?
-	//		will there be any issue with regular requests? ie blocked for suspicious traffic
 	plugin_list, err := fetchPluginList(xtpExtension, xtpToken)
 	initialListMsg := fmt.Sprintf("Please try one of the commands below:\n\n#%s",
 		strings.Join(maps.Keys(plugin_list), "\n#"))
@@ -102,7 +68,6 @@ func twitchWorker(
 				return
 			}
 
-			// TODO: consolidate magic number
 			if len(moduleQueue) == 16 {
 				client.Reply(message.Channel, message.ID, "The queue is full, blocking until another module is consumed")
 			}

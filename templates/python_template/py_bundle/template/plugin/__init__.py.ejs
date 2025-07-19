@@ -68,7 +68,7 @@ def batch_compute_wf():
   input:bytes = extism.input_bytes()
   
   input_args = array('f', input)
-  integer_input_args = array('i', input) # TODO: only convert one value
+  integer_input_args = array('i', input)
 
   sampleTime:float = input_args[0]
   freqHz:float     = input_args[1]

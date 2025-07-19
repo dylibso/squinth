@@ -2,6 +2,8 @@
 
 A demonstration of collaborative audio programming via XTP, Extism, VCV Rack, and Twitch!
 
+sQuinth connects Twitch, VCV Rack, and Dylibso's XTP to create a multi-language programmable oscillator that viewers can control through online chat messages.
+
 ![Module Panel Design](/vcv_module/res/sQuinth.png)
 
 ## Quick Start
@@ -13,7 +15,7 @@ Download and install all prerequisites:
 ./get_prereqs.sh
 ```
 
-Set your "Rack User dir"" if it isn't already in your .bashrc. This is where the directories that contain your patch files and your plugins live.
+Set your ```RACK_USER_DIR``` if it isn't already in your ```.bashrc```. This is where the directories that contain your patch files and your plugins live.
 ```
 export RACK_USER_DIR=/home/<user>/.local/share/Rack2
 ```
@@ -64,6 +66,7 @@ used to modulate the waveform over time.
 ## Communicate with Twitch and the XTP Plugin registry
 
 Before you are able to run the go program that listens to Twitch and downloads plugins from your registry, you will need to create a ```.env``` file in the ```twitch_server/``` directory that contains:
+
 - a Twitch oauth token with chat permissions
 - the name of your Twitch channel
 - your XTP token
@@ -73,5 +76,7 @@ Before you are able to run the go program that listens to Twitch and downloads p
 XTP_TOKEN=""
 XTP_EXTENSION_ID=""
 TWITCH_OAUTH=""
-TWITCH_USER=""
+CHANNEL=""
 ```
+
+Then ```go run *.go```. The worker will listen to the chat messages and to requests for updates made by the VCV Rack module.
