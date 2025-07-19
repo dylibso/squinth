@@ -4,8 +4,6 @@ A demonstration of collaborative audio programming via XTP, Extism, VCV Rack, an
 
 sQuinth connects Twitch, VCV Rack, and Dylibso's XTP to create a multi-language programmable oscillator that viewers can control through online chat messages.
 
-[Recorded Demonstration](https://www.youtube.com/watch?v=Hkm8t46-JYg)
-
 ![Module Panel Design](/vcv_module/res/sQuinth.png)
 
 ## Quick Start
