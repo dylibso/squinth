@@ -15,7 +15,6 @@ export function wave(): number {
 
 export function batch_compute_wf(): number {
   var input_buffer = new Float32Array(Host.inputBytes());
-  // TODO: just convert one var to i32 rather than all of them
   var int_input_buffer = new Int32Array(Host.inputBytes());
 
   var sampleTime = input_buffer[0];
@@ -31,7 +30,7 @@ export function batch_compute_wf(): number {
 
   var isLeftChannel = int_input_buffer[3] > 0;
 
-  var sample = 0; // TODO: placeholder
+  var sample = 0;
   var sampleRate = input_buffer[11];
 
   var floatbuf = new Float32Array(numSamples);
@@ -46,7 +45,6 @@ export function batch_compute_wf(): number {
   };
 
   for (let sampleNo = 0; sampleNo < floatbuf.length; sampleNo++) {
-    // TODO: instantiate a WaveArgs
     args.phase = (currPhase + args.freq_hz * sampleTime * sampleNo) % 1;
     args.sample = args.sample + 1;
     floatbuf[sampleNo] = main.waveImpl(args);

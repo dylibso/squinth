@@ -135,7 +135,7 @@ int32_t EXTISM_EXPORTED_FUNCTION(batch_compute_wf) {
 
   std::vector<float> inputs = {input_one, input_two};
 
-  std::vector<uint8_t> outputData(num_samples * 4); // TODO: FIX
+  std::vector<uint8_t> outputData(num_samples * 4); 
   for (size_t sample_no = 0; sample_no < num_samples;
        sample_no = sample_no + 1) {
     float phase = fmod(curr_phase + freq_hz * sample_time * sample_no, 1.0);

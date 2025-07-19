@@ -222,7 +222,6 @@ struct WasmURLItem : MenuItem {
   sQuinth *module;
 
   void onAction(const event::Action &e) override {
-    // TODO: test path
     module->load_wasm("http://0.0.0.0:5310/module-queue", true);
   }
 };
@@ -241,13 +240,6 @@ struct sQuinthWidget : ModuleWidget {
     addChild(pBackPanel);
     pBackPanel->visible = true;
 
-    // addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-    // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH,
-    // 0))); addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH,
-    // RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-    // addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH,
-    // RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
     addInput(createInputCentered<PJ301MPort>(mm2px(Vec(21.609, 32.823)), module,
                                              sQuinth::I1_INPUT));
     addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.313, 18.636)), module,
@@ -265,8 +257,6 @@ struct sQuinthWidget : ModuleWidget {
     addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(145.156, 89.948)),
                                                module, sQuinth::OUT_R_OUTPUT));
 
-    // TextDisplay* text_display =
-    // createWidget<TextDisplay>(Vec(RACK_GRID_WIDTH, 100.00));
     TextDisplay *text_display = createWidget<TextDisplay>(
         Vec(36.0 * MM_TO_NVG_UNITS, 67.0 * MM_TO_NVG_UNITS));
     text_display->box.size =
